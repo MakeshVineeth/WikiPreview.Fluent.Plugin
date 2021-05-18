@@ -104,7 +104,7 @@ namespace WikiPreview.Fluent.Plugin
                 WikiSnippet wiki = new() { SnippetText = snippet, ImageURL = imageURL, PageDesc = pageDesc, PageID = pageID, PageTitle = pageTitle };
 
                 BitmapImageResult bitmapImageResult;
-                if (string.IsNullOrEmpty(wiki.ImageURL))
+                if (!string.IsNullOrEmpty(wiki.ImageURL))
                 {
                     Stream stream = await client.GetStreamAsync(wiki.ImageURL);
                     bitmapImageResult = new BitmapImageResult(new System.Drawing.Bitmap(stream));
