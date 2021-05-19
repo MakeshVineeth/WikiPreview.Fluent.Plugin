@@ -11,7 +11,10 @@ namespace WikiPreview.Fluent.Plugin
         public WikiPreviewSearchResult(string searchAppName, BitmapImageResult bitmapImageResult, string displayedName, string resultName, string searchedText, string resultType, double score, IList<ISearchOperation> supportedOperations, ICollection<SearchTag> tags, ProcessInfo processInfo = null) : base(searchAppName, resultName, searchedText, resultType, score, supportedOperations, tags, processInfo)
         {
             DisplayedName = displayedName;
-            if (bitmapImageResult != null) PreviewImage = bitmapImageResult;
+            if (bitmapImageResult != null) { PreviewImage = bitmapImageResult; }
+            else {
+                IconGlyph = "\uF6FA";
+            }
         }
 
         protected override void OnSelectedSearchResultChanged()
