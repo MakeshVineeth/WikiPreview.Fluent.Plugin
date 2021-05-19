@@ -5,11 +5,10 @@ using Blast.Core.Interfaces;
 using Blast.Core.Objects;
 using Blast.Core.Results;
 using System.Net.Http;
-using System.Text.Json;
-using static System.Text.Json.JsonElement;
-using WikiSnippetSpace;
 using System.Drawing;
 using System.IO;
+using System.Net.Http.Json;
+using static WikiPreviewConsole.WikiResult;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -77,49 +76,30 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
             }
 
-            string url = "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=0&gsrsearch="+ searchedText +"&gsrlimit=6&prop=pageimages|extracts&exintro&explaintext&exsentences=8&exlimit=max&pilicense=any&redirects&format=json&pithumbsize=100";
-
+            QueryConfiguration queryConfiguration = new() { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8, SentenceCount = 8 };
+            string url = GetFormattedURL(queryConfiguration);
             using var httpClient = new HttpClient();
-            HttpResponseMessage response = await httpClient.GetAsync(url, cancellationToken);
+            var response = await httpClient.GetFromJsonAsync<Wiki>(url, cancellationToken);
 
-            if (response.IsSuccessStatusCode)
+            if (response != null)
             {
-
-                string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                JsonDocument jsonDocument = JsonDocument.Parse(responseBody);
-                JsonElement query = jsonDocument.RootElement.GetProperty("query");
-                JsonElement searchMap = query.GetProperty("pages");
-                ObjectEnumerator list = searchMap.EnumerateObject();
-                List<WikiSnippet> snippetslist = new();
-
-                while (list.MoveNext())
+                foreach (KeyValuePair<string, PageView> entry in response.query.pages)
                 {
 
-                    JsonProperty current = list.Current;
-                    JsonElement currentElement = current.Value;
-                    string pageDesc = currentElement.GetProperty("extract").ToString();
-                    string pageID = currentElement.GetProperty("pageid").ToString();
-                    string pageTitle = currentElement.GetProperty("title").ToString();
+                    string pageDesc = entry.Value.extract;
+                    string pageTitle = entry.Value.title;
                     string imageURL = "";
 
-                    if (currentElement.TryGetProperty("thumbnail", out JsonElement thumbnail))
+                    if (entry.Value.thumbnail != null)
                     {
-                        if (thumbnail.TryGetProperty("source", out JsonElement source))
-                        {
-                            string img_url = source.ToString();
-                            if (!string.IsNullOrEmpty(img_url))
-                                imageURL = img_url;
-                        }
-
+                        string img_url = entry.Value.thumbnail.source;
+                        imageURL = img_url;
                     }
 
-                    WikiSnippet wiki = new() { ImageURL = imageURL, PageDesc = pageDesc, PageID = pageID, PageTitle = pageTitle };
-
                     BitmapImageResult bitmapImageResult;
-                    if (!string.IsNullOrEmpty(wiki.ImageURL))
+                    if (!string.IsNullOrEmpty(imageURL))
                     {
-                        using var httpClient1 = new HttpClient();
-                        Stream stream = await httpClient1.GetStreamAsync(wiki.ImageURL, cancellationToken);
+                        Stream stream = await httpClient.GetStreamAsync(imageURL, cancellationToken);
                         bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
                     }
                     else
@@ -127,11 +107,16 @@ namespace WikiPreview.Fluent.Plugin
                         bitmapImageResult = null;
                     }
 
-                    yield return new WikiPreviewSearchResult(SearchAppName, bitmapImageResult, wiki.PageTitle, wiki.PageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
+                    yield return new WikiPreviewSearchResult(SearchAppName, bitmapImageResult, pageTitle, pageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
                 }
 
             }
 
+        }
+
+        public static string GetFormattedURL(QueryConfiguration queryConfiguration)
+        {
+            return "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=" + queryConfiguration.WikiNameSpace.ToString() + "&gsrsearch=" + queryConfiguration.SearchTerm + "&gsrlimit=" + queryConfiguration.ResultsCount.ToString() + "&prop=pageimages|extracts&exintro&explaintext&exsentences=" + queryConfiguration.SentenceCount + "&exlimit=max&pilicense=any&redirects&format=json&pithumbsize=" + queryConfiguration.ImageSize.ToString();
         }
     }
 }
