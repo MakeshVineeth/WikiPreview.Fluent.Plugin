@@ -118,8 +118,7 @@ namespace WikiPreview.Fluent.Plugin
                     BitmapImageResult bitmapImageResult;
                     if (!string.IsNullOrEmpty(wiki.ImageURL))
                     {
-                        using var httpClient1 = new HttpClient();
-                        Stream stream = await httpClient1.GetStreamAsync(wiki.ImageURL, cancellationToken);
+                        Stream stream = await httpClient.GetStreamAsync(wiki.ImageURL, cancellationToken);
                         bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
                     }
                     else
