@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Blast.Core.Interfaces;
@@ -78,104 +77,61 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
             }
 
-            string searchSuggest = "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=" + searchedText + "&srlimit=8&format=json";
+            string url = "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=0&gsrsearch="+ searchedText +"&gsrlimit=6&prop=pageimages|extracts&exintro&explaintext&exsentences=8&exlimit=max&pilicense=any&redirects&format=json&pithumbsize=100";
 
-            JsonElement query = await GetJsonElementAsync(searchSuggest);
-            bool status = query.TryGetProperty("search", out JsonElement searchMap);
-
-            if (status)
-            {
-                ArrayEnumerator list = searchMap.EnumerateArray();
-
-                while (list.MoveNext())
-                {
-                    JsonElement currentElement = list.Current;
-                    string snippet = currentElement.GetProperty("snippet").ToString();
-
-                    snippet = snippet.Replace("<span class=\"searchmatch\">", "");
-                    snippet = snippet.Replace("</span>", "");
-                    snippet = snippet.Replace("&quot;", "");
-
-                    string pageID = currentElement.GetProperty("pageid").ToString();
-                    string pageTitle = currentElement.GetProperty("title").ToString();
-
-                    List<string> data = await GetPageDescription(pageID);
-
-                    if (data.Count != 0)
-                    {
-                        string pageDesc = data[0];
-                        string imageURL = data.Count == 2 ? data[1] : "";
-
-                        WikiSnippet wiki = new() { SnippetText = snippet, ImageURL = imageURL, PageDesc = pageDesc, PageID = pageID, PageTitle = pageTitle };
-
-                        BitmapImageResult bitmapImageResult;
-                        if (!string.IsNullOrEmpty(wiki.ImageURL))
-                        {
-                            using var httpClient = new HttpClient();
-                            Stream stream = await httpClient.GetStreamAsync(wiki.ImageURL, cancellationToken);
-                            bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
-                        }
-                        else
-                        {
-                            bitmapImageResult = null;
-                        }
-
-                        yield return new WikiPreviewSearchResult(SearchAppName, bitmapImageResult, wiki.PageTitle, wiki.PageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
-                    }
-
-                }
-
-            }
-
-        }
-
-        public static async Task<JsonElement> GetJsonElementAsync(string url)
-        {
             using var httpClient = new HttpClient();
-            HttpResponseMessage response = await httpClient.GetAsync(url);
+            HttpResponseMessage response = await httpClient.GetAsync(url, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
-                string responseBody = await response.Content.ReadAsStringAsync();
+
+                string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
                 JsonDocument jsonDocument = JsonDocument.Parse(responseBody);
+                JsonElement query = jsonDocument.RootElement.GetProperty("query");
+                JsonElement searchMap = query.GetProperty("pages");
+                ObjectEnumerator list = searchMap.EnumerateObject();
+                List<WikiSnippet> snippetslist = new();
 
-                return jsonDocument.RootElement.GetProperty("query");
-            }
-            else
-            {
-                return new JsonElement();
-            }
-
-
-        }
-
-        public static async Task<List<string>> GetPageDescription(string pageID)
-        {
-            string url = "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|pageimages&pageids=" + pageID + "&explaintext&redirects=&exintro";
-            JsonElement pageParse = await GetJsonElementAsync(url);
-
-            bool status = pageParse.TryGetProperty("pages", out JsonElement pagesMap);
-
-            if (!status) return new List<string>();
-
-            JsonElement pageIDJson = pagesMap.GetProperty(pageID);
-
-            List<string> details = new();
-            string desc = pageIDJson.GetProperty("extract").ToString();
-            details.Add(desc);
-
-            if (pageIDJson.TryGetProperty("thumbnail", out JsonElement thumbnail))
-            {
-                if (thumbnail.TryGetProperty("source", out JsonElement source))
+                while (list.MoveNext())
                 {
-                    string img_url = source.ToString();
-                    if (!string.IsNullOrEmpty(img_url))
-                        details.Add(img_url);
+
+                    JsonProperty current = list.Current;
+                    JsonElement currentElement = current.Value;
+                    string pageDesc = currentElement.GetProperty("extract").ToString();
+                    string pageID = currentElement.GetProperty("pageid").ToString();
+                    string pageTitle = currentElement.GetProperty("title").ToString();
+                    string imageURL = "";
+
+                    if (currentElement.TryGetProperty("thumbnail", out JsonElement thumbnail))
+                    {
+                        if (thumbnail.TryGetProperty("source", out JsonElement source))
+                        {
+                            string img_url = source.ToString();
+                            if (!string.IsNullOrEmpty(img_url))
+                                imageURL = img_url;
+                        }
+
+                    }
+
+                    WikiSnippet wiki = new() { ImageURL = imageURL, PageDesc = pageDesc, PageID = pageID, PageTitle = pageTitle };
+
+                    BitmapImageResult bitmapImageResult;
+                    if (!string.IsNullOrEmpty(wiki.ImageURL))
+                    {
+                        using var httpClient1 = new HttpClient();
+                        Stream stream = await httpClient1.GetStreamAsync(wiki.ImageURL, cancellationToken);
+                        bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
+                    }
+                    else
+                    {
+                        bitmapImageResult = null;
+                    }
+
+                    yield return new WikiPreviewSearchResult(SearchAppName, bitmapImageResult, wiki.PageTitle, wiki.PageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
                 }
 
             }
 
-            return details;
         }
     }
 }
