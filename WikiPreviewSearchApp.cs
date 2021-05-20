@@ -9,6 +9,8 @@ using System.Drawing;
 using System.IO;
 using System.Net.Http.Json;
 using static WikiPreviewConsole.WikiResult;
+using System.Threading.Channels;
+using Dasync.Collections;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -79,39 +81,42 @@ namespace WikiPreview.Fluent.Plugin
             QueryConfiguration queryConfiguration = new() { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8, SentenceCount = 8 };
             string url = GetFormattedURL(queryConfiguration);
             using var httpClient = new HttpClient();
-            var response = await httpClient.GetFromJsonAsync<Wiki>(url, cancellationToken);
-
-            if (response != null)
+            Channel<WikiPreviewSearchResult> channel = Channel.CreateUnbounded<WikiPreviewSearchResult>();
+            _= httpClient.GetFromJsonAsync<Wiki>(url, cancellationToken).ContinueWith(response =>
             {
-                foreach (KeyValuePair<string, PageView> entry in response.query.pages)
+                if (response.IsCompletedSuccessfully && response.Result != null)
                 {
-
-                    string pageDesc = entry.Value.extract;
-                    string pageTitle = entry.Value.title;
-                    string imageURL = "";
-
-                    if (entry.Value.thumbnail != null)
+                    _ = response.Result.query.pages.ParallelForEachAsync(async entry =>
                     {
-                        string img_url = entry.Value.thumbnail.source;
-                        imageURL = img_url;
-                    }
+                        string pageDesc = entry.Value.extract;
+                        string pageTitle = entry.Value.title;
+                        string imageURL = "";
 
-                    BitmapImageResult bitmapImageResult;
-                    if (!string.IsNullOrEmpty(imageURL))
-                    {
-                        Stream stream = await httpClient.GetStreamAsync(imageURL, cancellationToken);
-                        bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
-                    }
-                    else
-                    {
-                        bitmapImageResult = null;
-                    }
+                        if (entry.Value.thumbnail != null)
+                        {
+                            string img_url = entry.Value.thumbnail.source;
+                            imageURL = img_url;
+                        }
 
-                    yield return new WikiPreviewSearchResult(SearchAppName, bitmapImageResult, pageTitle, pageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
+                        BitmapImageResult bitmapImageResult;
+                        if (!string.IsNullOrEmpty(imageURL))
+                        {
+                            using var imageClient = new HttpClient();
+                            Stream stream = await imageClient.GetStreamAsync(imageURL, cancellationToken);
+                            bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
+                        }
+                        else
+                        {
+                            bitmapImageResult = null;
+                        }
+
+                        WikiPreviewSearchResult wikiPreviewSearchResult = new(SearchAppName, bitmapImageResult, pageTitle, pageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
+                        await channel.Writer.WriteAsync(wikiPreviewSearchResult);
+                    }, maxDegreeOfParallelism: 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
                 }
 
-            }
-
+                return channel.Reader.ReadAllAsync();
+            });
         }
 
         public static string GetFormattedURL(QueryConfiguration queryConfiguration)
