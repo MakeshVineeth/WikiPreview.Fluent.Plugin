@@ -11,6 +11,7 @@ using System.Net.Http.Json;
 using static WikiPreviewConsole.WikiResult;
 using System.Threading.Channels;
 using Dasync.Collections;
+using Blast.Core;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -66,7 +67,7 @@ namespace WikiPreview.Fluent.Plugin
             return ValueTask.CompletedTask;
         }
 
-        public async IAsyncEnumerable<ISearchResult> SearchAsync(SearchRequest searchRequest, CancellationToken cancellationToken)
+        public IAsyncEnumerable<ISearchResult> SearchAsync(SearchRequest searchRequest, CancellationToken cancellationToken)
         {
             string searchedTag = searchRequest.SearchedTag;
             string searchedText = searchRequest.SearchedText;
@@ -75,7 +76,7 @@ namespace WikiPreview.Fluent.Plugin
 
             if (string.IsNullOrWhiteSpace(searchedTag) && string.IsNullOrEmpty(searchedText))
             {
-                yield break;
+                return SynchronousAsyncEnumerable.Empty;
             }
 
             QueryConfiguration queryConfiguration = new() { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8, SentenceCount = 8 };
@@ -115,8 +116,10 @@ namespace WikiPreview.Fluent.Plugin
                     }, maxDegreeOfParallelism: 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
                 }
 
-                return channel.Reader.ReadAllAsync(cancellationToken);
+                
             });
+           
+            return channel.Reader.ReadAllAsync(cancellationToken);
         }
 
         public static string GetFormattedURL(QueryConfiguration queryConfiguration)
