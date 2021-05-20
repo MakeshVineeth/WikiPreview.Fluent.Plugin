@@ -67,7 +67,7 @@ namespace WikiPreview.Fluent.Plugin
             return ValueTask.CompletedTask;
         }
 
-        public IAsyncEnumerable<ISearchResult> SearchAsync(SearchRequest searchRequest, CancellationToken cancellationToken)
+        public async IAsyncEnumerable<ISearchResult> SearchAsync(SearchRequest searchRequest, CancellationToken cancellationToken)
         {
             string searchedTag = searchRequest.SearchedTag;
             string searchedText = searchRequest.SearchedText;
@@ -76,50 +76,56 @@ namespace WikiPreview.Fluent.Plugin
 
             if (string.IsNullOrWhiteSpace(searchedTag) && string.IsNullOrEmpty(searchedText))
             {
-                return SynchronousAsyncEnumerable.Empty;
+                yield break;
             }
 
             QueryConfiguration queryConfiguration = new() { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8, SentenceCount = 8 };
             string url = GetFormattedURL(queryConfiguration);
             using var httpClient = new HttpClient();
             Channel<WikiPreviewSearchResult> channel = Channel.CreateUnbounded<WikiPreviewSearchResult>();
-            _= httpClient.GetFromJsonAsync<Wiki>(url, cancellationToken).ContinueWith(response =>
+            _ = httpClient.GetFromJsonAsync<Wiki>(url, cancellationToken).ContinueWith(response =>
+             {
+                 if (response.IsCompletedSuccessfully && response.Result != null)
+                 {
+                     _ = response.Result.query.pages.ParallelForEachAsync(async entry =>
+                     {
+                         string pageDesc = entry.Value.extract;
+                         string pageTitle = entry.Value.title;
+                         string imageURL = "";
+
+                         if (entry.Value.thumbnail != null)
+                         {
+                             string img_url = entry.Value.thumbnail.source;
+                             imageURL = img_url;
+                         }
+
+                         BitmapImageResult bitmapImageResult;
+                         if (!string.IsNullOrEmpty(imageURL))
+                         {
+                             using var imageClient = new HttpClient();
+                             Stream stream = await imageClient.GetStreamAsync(imageURL, cancellationToken);
+                             bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
+                         }
+                         else
+                         {
+                             bitmapImageResult = null;
+                         }
+
+                         WikiPreviewSearchResult wikiPreviewSearchResult = new(SearchAppName, bitmapImageResult, pageTitle, pageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
+                         await channel.Writer.WriteAsync(wikiPreviewSearchResult);
+                     }, maxDegreeOfParallelism: 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
+                 }
+
+                 else
+                 {
+                     channel.Writer.Complete();
+                 }
+             });
+
+            await foreach (WikiPreviewSearchResult item in channel.Reader.ReadAllAsync(cancellationToken))
             {
-                if (response.IsCompletedSuccessfully && response.Result != null)
-                {
-                    _ = response.Result.query.pages.ParallelForEachAsync(async entry =>
-                    {
-                        string pageDesc = entry.Value.extract;
-                        string pageTitle = entry.Value.title;
-                        string imageURL = "";
-
-                        if (entry.Value.thumbnail != null)
-                        {
-                            string img_url = entry.Value.thumbnail.source;
-                            imageURL = img_url;
-                        }
-
-                        BitmapImageResult bitmapImageResult;
-                        if (!string.IsNullOrEmpty(imageURL))
-                        {
-                            using var imageClient = new HttpClient();
-                            Stream stream = await imageClient.GetStreamAsync(imageURL, cancellationToken);
-                            bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
-                        }
-                        else
-                        {
-                            bitmapImageResult = null;
-                        }
-
-                        WikiPreviewSearchResult wikiPreviewSearchResult = new(SearchAppName, bitmapImageResult, pageTitle, pageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
-                        await channel.Writer.WriteAsync(wikiPreviewSearchResult);
-                    }, maxDegreeOfParallelism: 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
-                }
-
-                
-            });
-           
-            return channel.Reader.ReadAllAsync(cancellationToken);
+                yield return item;
+            }
         }
 
         public static string GetFormattedURL(QueryConfiguration queryConfiguration)
