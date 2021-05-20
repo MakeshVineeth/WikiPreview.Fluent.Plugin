@@ -115,7 +115,7 @@ namespace WikiPreview.Fluent.Plugin
                     }, maxDegreeOfParallelism: 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
                 }
 
-                return channel.Reader.ReadAllAsync();
+                return channel.Reader.ReadAllAsync(cancellationToken);
             });
         }
 
