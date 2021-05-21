@@ -15,7 +15,6 @@ using static WikiPreview.Fluent.Plugin.WikiPreviewSearchOperation;
 using System;
 using Blast.API.Core.Processes;
 using Blast.API.Processes;
-using TextCopy;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -164,7 +163,7 @@ namespace WikiPreview.Fluent.Plugin
                  {
                      channel.Writer.Complete();
                  }
-             });
+             }, cancellationToken);
 
             await foreach (WikiPreviewSearchResult item in channel.Reader.ReadAllAsync(cancellationToken))
             {
