@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CS8425: Async-iterator member has one or more parameters of type 'CancellationToken' but none of them is decorated with the 'EnumeratorCancellation' attribute, so the cancellation token parameter from the generated 'IAsyncEnumerable<>.GetAsyncEnumerator' will be unconsumed
+dotnet_diagnostic.CS8425.severity = none

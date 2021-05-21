@@ -11,6 +11,11 @@ using System.Net.Http.Json;
 using static WikiPreviewConsole.WikiResult;
 using System.Threading.Channels;
 using Dasync.Collections;
+using static WikiPreview.Fluent.Plugin.WikiPreviewSearchOperation;
+using System;
+using Blast.API.Core.Processes;
+using Blast.API.Processes;
+using TextCopy;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -31,7 +36,13 @@ namespace WikiPreview.Fluent.Plugin
                     {Name = name, IconGlyph = "\uEDE4", Description = "Search in Wikipedia"},
 
             };
-            _supportedOperations = new List<ISearchOperation>();
+            _supportedOperations = new List<ISearchOperation> {
+                new WikiSearchOperation(),
+                new WikiwandSearchOperation(),
+                new GoogleSearchOperation(),
+                new CopyUrlSearchOperation(),
+            };
+
             _applicationInfo = new SearchApplicationInfo(SearchAppName,
                 "This extension can search in Wikipedia", _supportedOperations)
             {
@@ -41,7 +52,6 @@ namespace WikiPreview.Fluent.Plugin
                 ApplicationIconGlyph = "\uE946",
                 SearchAllTime = ApplicationSearchTime.Fast,
                 DefaultSearchTags = _searchTags,
-
             };
         }
 
@@ -58,6 +68,41 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask<IHandleResult> HandleSearchResult(ISearchResult searchResult)
         {
+            ISearchOperation selectedOperation = searchResult.SelectedOperation;
+            Type selectedOperationType = selectedOperation.GetType();
+            IProcessManager managerInstance = ProcessUtils.GetManagerInstance();
+
+            switch (selectedOperationType)
+            {
+                case var type when type == typeof(WikiSearchOperation):
+                    {
+                        string wikiUrl = "https://en.wikipedia.org/wiki/" + searchResult.DisplayedName;
+                        managerInstance.StartNewProcess(wikiUrl);
+                        return new ValueTask<IHandleResult>(new HandleResult(true, false));
+                    }
+
+                case var type when type == typeof(WikiwandSearchOperation):
+                    {
+                        string url = "https://www.wikiwand.com/en/" + searchResult.DisplayedName;
+                        managerInstance.StartNewProcess(url);
+                        return new ValueTask<IHandleResult>(new HandleResult(true, false));
+                    }
+
+                case var type when type == typeof(CopyUrlSearchOperation):
+                    {
+                        string wikiUrl = "https://en.wikipedia.org/wiki/" + searchResult.DisplayedName;
+                        ClipboardService.SetText(wikiUrl); 
+                        return new ValueTask<IHandleResult>(new HandleResult(true, false));
+                    }
+
+                case var type when type == typeof(GoogleSearchOperation):
+                    {
+                        string url = "https://www.google.com/search?q=" + searchResult.DisplayedName;
+                        managerInstance.StartNewProcess(url);
+                        return new ValueTask<IHandleResult>(new HandleResult(true, false));
+                    }
+            }
+
             return new(new HandleResult(true, false));
         }
 
