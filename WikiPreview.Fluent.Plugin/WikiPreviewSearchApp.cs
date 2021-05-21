@@ -15,42 +15,30 @@ using static WikiPreview.Fluent.Plugin.WikiPreviewSearchOperation;
 using System;
 using Blast.API.Core.Processes;
 using Blast.API.Processes;
+using System.Text.Json;
+using Blast.API.Search;
 
 namespace WikiPreview.Fluent.Plugin
 {
     class WikiPreviewSearchApp : ISearchApplication
     {
-        private const string SearchAppName = "WikiPreview";
-        private const string name = "Wiki";
-        private readonly List<SearchTag> _searchTags;
+        public static readonly string SearchAppName = "WikiPreview";
+        public static readonly string WikiSearchTagName = "Wiki";
+        private readonly string wikiRootUrl = "https://en.wikipedia.org/wiki/";
         private readonly SearchApplicationInfo _applicationInfo;
-        private readonly List<ISearchOperation> _supportedOperations;
 
         public WikiPreviewSearchApp()
         {
 
-            _searchTags = new List<SearchTag>
-            {
-                new SearchTag
-                    {Name = name, IconGlyph = "\uEDE4", Description = "Search in Wikipedia"},
-
-            };
-            _supportedOperations = new List<ISearchOperation> {
-                new WikiSearchOperation(),
-                new WikiwandSearchOperation(),
-                new GoogleSearchOperation(),
-                new CopyUrlSearchOperation(),
-            };
-
             _applicationInfo = new SearchApplicationInfo(SearchAppName,
-                "This extension can search in Wikipedia", _supportedOperations)
+                "This extension can search in Wikipedia", WikiPreviewSearchResult.supportedOperations)
             {
                 MinimumSearchLength = 2,
                 IsProcessSearchEnabled = false,
                 IsProcessSearchOffline = false,
                 ApplicationIconGlyph = "\uE946",
                 SearchAllTime = ApplicationSearchTime.Fast,
-                DefaultSearchTags = _searchTags,
+                DefaultSearchTags = WikiPreviewSearchResult.searchTags,
             };
         }
 
@@ -75,7 +63,7 @@ namespace WikiPreview.Fluent.Plugin
             {
                 case var type when type == typeof(WikiSearchOperation):
                     {
-                        string wikiUrl = "https://en.wikipedia.org/wiki/" + searchResult.DisplayedName;
+                        string wikiUrl = wikiRootUrl + searchResult.DisplayedName;
                         managerInstance.StartNewProcess(wikiUrl);
                         return new ValueTask<IHandleResult>(new HandleResult(true, false));
                     }
@@ -89,7 +77,7 @@ namespace WikiPreview.Fluent.Plugin
 
                 case var type when type == typeof(CopyUrlSearchOperation):
                     {
-                        string wikiUrl = "https://en.wikipedia.org/wiki/" + searchResult.DisplayedName;
+                        string wikiUrl = wikiRootUrl + searchResult.DisplayedName;
                         TextCopy.Clipboard.SetText(wikiUrl);
                         return new ValueTask<IHandleResult>(new HandleResult(true, false));
                     }
@@ -115,9 +103,8 @@ namespace WikiPreview.Fluent.Plugin
             string searchedTag = searchRequest.SearchedTag;
             string searchedText = searchRequest.SearchedText;
             searchedText = searchedText.Trim();
-            searchedText = searchedText.Replace(' ', '_');
 
-            if (string.IsNullOrWhiteSpace(searchedTag) && string.IsNullOrEmpty(searchedText))
+            if (string.IsNullOrWhiteSpace(searchedTag) && !searchedTag.Equals(WikiSearchTagName, StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(searchedText))
             {
                 yield break;
             }
@@ -126,35 +113,35 @@ namespace WikiPreview.Fluent.Plugin
             string url = GetFormattedURL(queryConfiguration);
             using var httpClient = new HttpClient();
             Channel<WikiPreviewSearchResult> channel = Channel.CreateUnbounded<WikiPreviewSearchResult>();
-            _ = httpClient.GetFromJsonAsync<Wiki>(url, cancellationToken).ContinueWith(response =>
+
+            JsonSerializerOptions serializerOptions = new() { PropertyNameCaseInsensitive = true };
+            _ = httpClient.GetFromJsonAsync<Wiki>(url, serializerOptions, cancellationToken).ContinueWith(task =>
              {
-                 if (response.IsCompletedSuccessfully && response.Result != null)
+                 if (task.IsCompletedSuccessfully && task.Result != null)
                  {
-                     _ = response.Result.query.pages.ParallelForEachAsync(async entry =>
+                     _ = task.Result.Query.Pages.ParallelForEachAsync(async entry =>
                      {
-                         string pageDesc = entry.Value.extract;
-                         string pageTitle = entry.Value.title;
-                         string imageURL = "";
-
-                         if (entry.Value.thumbnail != null)
-                         {
-                             string img_url = entry.Value.thumbnail.source;
-                             imageURL = img_url;
-                         }
-
+                         string resultName = entry.Value.Extract;
+                         string displayedName = entry.Value.Title;
+                         double score = displayedName.SearchDistanceScore(searchedText);
+                         string pageID = entry.Value.PageId.ToString();
+                         string url = wikiRootUrl + displayedName;
+                         string resultType = "";
                          BitmapImageResult bitmapImageResult;
-                         if (!string.IsNullOrEmpty(imageURL))
+
+                         if (entry.Value.Thumbnail != null)
                          {
+                             string img_url = entry.Value.Thumbnail.Source;
                              using var imageClient = new HttpClient();
-                             Stream stream = await imageClient.GetStreamAsync(imageURL, cancellationToken);
+                             Stream stream = await imageClient.GetStreamAsync(img_url, cancellationToken);
                              bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
                          }
                          else
                          {
-                             bitmapImageResult = null;
+                             bitmapImageResult = new BitmapImageResult(); // create empty if no image source.
                          }
 
-                         WikiPreviewSearchResult wikiPreviewSearchResult = new(SearchAppName, bitmapImageResult, pageTitle, pageDesc, searchedText, "", 2, _supportedOperations, _searchTags);
+                         WikiPreviewSearchResult wikiPreviewSearchResult = new() { URL = url, PreviewImage = bitmapImageResult, DisplayedName = displayedName, ResultName = resultName, SearchedText = searchedText, ResultType = resultType, Score = score, PageID = pageID };
                          await channel.Writer.WriteAsync(wikiPreviewSearchResult);
                      }, maxDegreeOfParallelism: 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
                  }
@@ -173,7 +160,7 @@ namespace WikiPreview.Fluent.Plugin
 
         public static string GetFormattedURL(QueryConfiguration queryConfiguration)
         {
-            return "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=" + queryConfiguration.WikiNameSpace.ToString() + "&gsrsearch=" + queryConfiguration.SearchTerm + "&gsrlimit=" + queryConfiguration.ResultsCount.ToString() + "&prop=pageimages|extracts&exintro&explaintext&exsentences=" + queryConfiguration.SentenceCount + "&exlimit=max&pilicense=any&redirects&format=json&pithumbsize=" + queryConfiguration.ImageSize.ToString();
+            return "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=" + queryConfiguration.WikiNameSpace + "&gsrsearch=" + queryConfiguration.SearchTerm + "&gsrlimit=" + queryConfiguration.ResultsCount + "&prop=pageimages|extracts&exintro&explaintext&exsentences=" + queryConfiguration.SentenceCount + "&exlimit=max&pilicense=any&redirects&format=json&pithumbsize=" + queryConfiguration.ImageSize;
         }
     }
 }
