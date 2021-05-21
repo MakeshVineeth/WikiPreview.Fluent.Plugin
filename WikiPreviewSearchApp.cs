@@ -11,7 +11,6 @@ using System.Net.Http.Json;
 using static WikiPreviewConsole.WikiResult;
 using System.Threading.Channels;
 using Dasync.Collections;
-using Blast.Core;
 
 namespace WikiPreview.Fluent.Plugin
 {
