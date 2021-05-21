@@ -91,7 +91,7 @@ namespace WikiPreview.Fluent.Plugin
                 case var type when type == typeof(CopyUrlSearchOperation):
                     {
                         string wikiUrl = "https://en.wikipedia.org/wiki/" + searchResult.DisplayedName;
-                        ClipboardService.SetText(wikiUrl); 
+                        TextCopy.Clipboard.SetText(wikiUrl);
                         return new ValueTask<IHandleResult>(new HandleResult(true, false));
                     }
 
