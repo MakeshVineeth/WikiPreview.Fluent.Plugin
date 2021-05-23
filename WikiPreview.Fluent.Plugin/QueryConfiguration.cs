@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace WikiPreview.Fluent.Plugin
+﻿namespace WikiPreview.Fluent.Plugin
 {
-    class QueryConfiguration
+    public class QueryConfiguration
     {
         public string SearchTerm { get; set; }
         public int SentenceCount { get; set; }

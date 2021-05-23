@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace WikiPreviewConsole
+namespace WikiPreview.Fluent.Plugin
 {
-    internal class WikiResult
+    internal static class WikiResult
     {
         public class PageView
         {
@@ -16,7 +16,6 @@ namespace WikiPreviewConsole
         {
             public string Source { get; set; }
         }
-
 
         public class Query
         {

@@ -2,44 +2,34 @@
 
 namespace WikiPreview.Fluent.Plugin
 {
-    class WikiPreviewSearchOperation
+    public enum ActionType
     {
+        Wikipedia,
+        Wikiwand,
+        GoogleSearch
+    }
 
-        public class WikiSearchOperation : SearchOperationBase
+    public class WikiPreviewSearchOperation : SearchOperationBase
+    {
+        private WikiPreviewSearchOperation(ActionType actionType, string actionName, string actionDescription,
+            string icon)
         {
-            protected internal WikiSearchOperation() : base("Open in Wikipedia",
-                "Opens the article on Wikipedia.",
-                "\uE71B")
-            {
-
-            }
+            ActionType = actionType;
+            OperationName = actionName;
+            Description = actionDescription;
+            IconGlyph = icon;
         }
 
-        public class WikiwandSearchOperation : SearchOperationBase
-        {
-            protected internal WikiwandSearchOperation() : base("Open in Wikiwand", "Opens the Wikipedia article in Wikiwand with a custom viewing experience.",
-                "\uE774")
-            {
-                
-            }
-        }
+        public ActionType ActionType { get; }
 
-        public class CopyUrlSearchOperation : SearchOperationBase
-        {
-            protected internal CopyUrlSearchOperation() : base("Copy URL", "Copies the Wikipedia Article URL to the Clipboard.",
-                "\uE8C8")
-            {
+        public static WikiPreviewSearchOperation OpenWiki { get; } =
+            new(ActionType.Wikipedia, "Open in Wikipedia", "Opens the article on Wikipedia.", "\uE71B");
 
-            }
-        }
+        public static WikiPreviewSearchOperation OpenWikiWand { get; } =
+            new(ActionType.Wikiwand, "Open in Wikiwand",
+                "Opens the Wikipedia article in Wikiwand with a custom viewing experience.", "\uE774");
 
-        public class GoogleSearchOperation : SearchOperationBase
-        {
-            protected internal GoogleSearchOperation() : base("Search in Google", "Search with Google.",
-                "\uE721")
-            {
-
-            }
-        }
+        public static WikiPreviewSearchOperation OpenGoogle { get; } =
+            new(ActionType.GoogleSearch, "Search in Google", "Search with Google.", "\uE721");
     }
 }
