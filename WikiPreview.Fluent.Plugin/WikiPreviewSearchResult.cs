@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
 using Blast.Core.Results;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
@@ -19,7 +20,8 @@ namespace WikiPreview.Fluent.Plugin
             {
                 OpenWiki,
                 OpenWikiWand,
-                OpenGoogle
+                OpenGoogle,
+                new CopySearchOperation("Copy URL")
             };
 
         public static readonly ObservableCollection<SearchTag> SearchTags = new()

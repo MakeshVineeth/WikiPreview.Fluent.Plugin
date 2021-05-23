@@ -52,26 +52,23 @@ namespace WikiPreview.Fluent.Plugin
             if (searchResult is not WikiPreviewSearchResult wikiPreviewSearchResult)
                 throw new InvalidCastException(nameof(WikiPreviewSearchResult));
 
-            if (wikiPreviewSearchResult.SelectedOperation is not WikiPreviewSearchOperation wikiPreviewSearchOperation
-            )
-                throw new InvalidCastException(nameof(WikiPreviewSearchOperation));
-
             string displayedName = searchResult.DisplayedName;
             if (string.IsNullOrWhiteSpace(displayedName))
                 return new ValueTask<IHandleResult>(new HandleResult(true, false));
 
-            IProcessManager managerInstance = ProcessUtils.GetManagerInstance();
-            string actionUrl = wikiPreviewSearchOperation.ActionType switch
+            if (wikiPreviewSearchResult.SelectedOperation is WikiPreviewSearchOperation wikiPreviewSearchOperation
+            )
             {
-                ActionType.Wikipedia => WikiRootUrl + displayedName,
-                ActionType.Wikiwand => WikiWandUrl + displayedName,
-                ActionType.GoogleSearch => GoogleSearchUrl + displayedName,
-                _ => null
-            };
+                IProcessManager managerInstance = ProcessUtils.GetManagerInstance();
+                string actionUrl = wikiPreviewSearchOperation.ActionType switch
+                {
+                    ActionType.Wikipedia => WikiRootUrl + displayedName,
+                    ActionType.Wikiwand => WikiWandUrl + displayedName,
+                    ActionType.GoogleSearch => GoogleSearchUrl + displayedName,
+                    _ => null
+                };
 
-            if (!string.IsNullOrWhiteSpace(actionUrl))
-            {
-                managerInstance.StartNewProcess(actionUrl);
+                if (!string.IsNullOrWhiteSpace(actionUrl)) managerInstance.StartNewProcess(actionUrl);
             }
             else
             {
