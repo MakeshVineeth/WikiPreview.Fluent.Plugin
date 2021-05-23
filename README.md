@@ -2,7 +2,7 @@
 
 ![alt text](wikipreview_image.png "Preview Image")
 
-This repo is for a [Fluent Search](https://fluentsearch.net) plugin for searching in Wikipedia and displays results directly in the Fluent Search.
+This repo is for a [Fluent Search](https://fluentsearch.net) plugin for searching in Wikipedia and display results directly in the Fluent Search.
 
 # Usage
 
