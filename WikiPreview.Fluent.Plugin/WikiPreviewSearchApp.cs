@@ -26,6 +26,7 @@ namespace WikiPreview.Fluent.Plugin
         private const string SearchAppName = "WikiPreview";
         public const string WikiSearchTagName = "Wiki";
         private readonly SearchApplicationInfo _applicationInfo;
+        private readonly JsonSerializerOptions _serializerOptions = new() {PropertyNameCaseInsensitive = true};
 
         public WikiPreviewSearchApp()
         {
@@ -91,33 +92,41 @@ namespace WikiPreview.Fluent.Plugin
             string searchedText = searchRequest.SearchedText;
             searchedText = searchedText.Trim();
 
-            if (searchedTag != null && string.IsNullOrWhiteSpace(searchedTag) &&
-                !searchedTag.Equals(WikiSearchTagName, StringComparison.OrdinalIgnoreCase) &&
+            if (string.IsNullOrWhiteSpace(searchedTag) ||
+                !searchedTag.Equals(WikiSearchTagName, StringComparison.OrdinalIgnoreCase) ||
                 string.IsNullOrWhiteSpace(searchedText))
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
-                {SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8, SentenceCount = 8};
+                {SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8};
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
+
             var channel = Channel.CreateUnbounded<WikiPreviewSearchResult>();
 
-            JsonSerializerOptions serializerOptions = new() {PropertyNameCaseInsensitive = true};
-            _ = httpClient.GetFromJsonAsync<Wiki>(url, serializerOptions, cancellationToken).ContinueWith(task =>
+            _ = httpClient.GetFromJsonAsync<Wiki>(url, _serializerOptions, cancellationToken).ContinueWith(task =>
             {
-                if (task.IsCompletedSuccessfully && task.Result != null)
+                if (task.IsCompletedSuccessfully)
                     _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
                     {
-                        string resultName = entry.Value.Extract;
-                        string displayedName = entry.Value.Title;
+                        (_, PageView value) = entry;
+                        string resultName = value.Extract;
+                        string displayedName = value.Title;
                         double score = displayedName.SearchDistanceScore(searchedText);
-                        string pageId = entry.Value.PageId.ToString();
+                        string pageId = value.PageId.ToString();
                         string wikiUrl = WikiRootUrl + displayedName;
                         BitmapImageResult bitmapImageResult;
 
-                        if (entry.Value.Thumbnail != null)
+                        string additionalInfo = "";
+                        if (!string.IsNullOrWhiteSpace(resultName))
                         {
-                            string imgUrl = entry.Value.Thumbnail.Source;
+                            using var reader = new StringReader(resultName);
+                            additionalInfo = await reader.ReadLineAsync().ConfigureAwait(false) ?? resultName;
+                        }
+
+                        if (value.Thumbnail != null)
+                        {
+                            string imgUrl = value.Thumbnail.Source;
                             using var imageClient = new HttpClient();
                             Stream stream = await imageClient.GetStreamAsync(imgUrl, cancellationToken)
                                 .ConfigureAwait(false);
@@ -136,10 +145,11 @@ namespace WikiPreview.Fluent.Plugin
                             ResultName = resultName,
                             SearchedText = searchedText,
                             Score = score,
-                            PageId = pageId
+                            PageId = pageId,
+                            AdditionalInformation = additionalInfo
                         };
                         await channel.Writer.WriteAsync(wikiPreviewSearchResult).ConfigureAwait(false);
-                    }, 0, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
+                    }, cancellationToken).ContinueWith(_ => channel.Writer.Complete());
                 else
                     channel.Writer.Complete();
             });

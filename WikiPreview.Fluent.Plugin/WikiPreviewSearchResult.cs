@@ -52,8 +52,8 @@ namespace WikiPreview.Fluent.Plugin
         {
             return "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=" +
                    queryConfiguration.WikiNameSpace + "&gsrsearch=" + queryConfiguration.SearchTerm + "&gsrlimit=" +
-                   queryConfiguration.ResultsCount + "&prop=pageimages|extracts&exintro&explaintext&exsentences=" +
-                   queryConfiguration.SentenceCount + "&exlimit=max&pilicense=any&redirects&format=json&pithumbsize=" +
+                   queryConfiguration.ResultsCount +
+                   "&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=" +
                    queryConfiguration.ImageSize;
         }
 
