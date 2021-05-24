@@ -9,10 +9,10 @@ namespace WikiPreview.Fluent.Plugin
             public int PageId { get; set; }
             public string Title { get; set; }
             public string Extract { get; set; }
-            public WikImage Thumbnail { get; set; }
+            public WikiImage Thumbnail { get; set; }
         }
 
-        public class WikImage
+        public class WikiImage
         {
             public string Source { get; set; }
         }
