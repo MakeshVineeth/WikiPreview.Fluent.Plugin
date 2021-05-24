@@ -9,7 +9,7 @@ namespace WikiPreview.Fluent.Plugin
         GoogleSearch
     }
 
-    public class WikiPreviewSearchOperation : SearchOperationBase
+    public sealed class WikiPreviewSearchOperation : SearchOperationBase
     {
         private WikiPreviewSearchOperation(ActionType actionType, string actionName, string actionDescription,
             string icon)
