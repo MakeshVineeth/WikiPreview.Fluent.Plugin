@@ -58,14 +58,16 @@ namespace WikiPreview.Fluent.Plugin
             if (string.IsNullOrWhiteSpace(displayedName))
                 return new ValueTask<IHandleResult>(new HandleResult(true, false));
 
+            string titleUrl = displayedName.Replace(' ', '_');
+
             if (wikiPreviewSearchResult.SelectedOperation is WikiPreviewSearchOperation wikiPreviewSearchOperation
             )
             {
                 IProcessManager managerInstance = ProcessUtils.GetManagerInstance();
                 string actionUrl = wikiPreviewSearchOperation.ActionType switch
                 {
-                    ActionType.Wikipedia => WikiRootUrl + displayedName,
-                    ActionType.Wikiwand => WikiWandUrl + displayedName,
+                    ActionType.Wikipedia => WikiRootUrl + titleUrl,
+                    ActionType.Wikiwand => WikiWandUrl + titleUrl,
                     ActionType.GoogleSearch => GoogleSearchUrl + displayedName,
                     _ => null
                 };
@@ -74,7 +76,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else
             {
-                string wikiUrl = WikiRootUrl + displayedName;
+                string wikiUrl = WikiRootUrl + titleUrl;
                 Clipboard.SetText(wikiUrl);
             }
 
@@ -153,7 +155,7 @@ namespace WikiPreview.Fluent.Plugin
             string displayedName = value.Title;
             double score = displayedName.SearchDistanceScore(searchedText);
             string pageId = value.PageId.ToString();
-            string wikiUrl = WikiRootUrl + displayedName.Replace(" ","_");
+            string wikiUrl = WikiRootUrl + displayedName.Replace(' ','_');
             BitmapImageResult bitmapImageResult;
 
             string additionalInfo = "";
