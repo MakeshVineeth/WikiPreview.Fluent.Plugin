@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
@@ -54,11 +55,9 @@ namespace WikiPreview.Fluent.Plugin
             if (searchResult is not WikiPreviewSearchResult wikiPreviewSearchResult)
                 throw new InvalidCastException(nameof(WikiPreviewSearchResult));
 
-            string displayedName = searchResult.DisplayedName;
+            string displayedName = wikiPreviewSearchResult.DisplayedName;
             if (string.IsNullOrWhiteSpace(displayedName))
                 return new ValueTask<IHandleResult>(new HandleResult(true, false));
-
-            string titleUrl = displayedName.Replace(' ', '_');
 
             if (wikiPreviewSearchResult.SelectedOperation is WikiPreviewSearchOperation wikiPreviewSearchOperation
             )
@@ -66,9 +65,11 @@ namespace WikiPreview.Fluent.Plugin
                 IProcessManager managerInstance = ProcessUtils.GetManagerInstance();
                 string actionUrl = wikiPreviewSearchOperation.ActionType switch
                 {
-                    ActionType.Wikipedia => WikiRootUrl + titleUrl,
-                    ActionType.Wikiwand => WikiWandUrl + titleUrl,
-                    ActionType.GoogleSearch => GoogleSearchUrl + displayedName,
+                    ActionType.Wikipedia => new StringBuilder(WikiRootUrl).Append(wikiPreviewSearchResult.Url)
+                        .ToString(),
+                    ActionType.Wikiwand => new StringBuilder(WikiWandUrl).Append(wikiPreviewSearchResult.Url)
+                        .ToString(),
+                    ActionType.GoogleSearch => new StringBuilder(GoogleSearchUrl).Append(displayedName).ToString(),
                     _ => null
                 };
 
@@ -76,7 +77,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else
             {
-                string wikiUrl = WikiRootUrl + titleUrl;
+                string wikiUrl = new StringBuilder(WikiRootUrl).Append(wikiPreviewSearchResult.Url).ToString();
                 Clipboard.SetText(wikiUrl);
             }
 
@@ -144,8 +145,7 @@ namespace WikiPreview.Fluent.Plugin
             if (pages is {Count: 0}) return default;
 
             PageView pageView = pages.First();
-            WikiPreviewSearchResult wikiTask = await GenerateSearchResult(pageView, pageView?.Title);
-            return wikiTask;
+            return await GenerateSearchResult(pageView, pageView?.Title);
         }
 
         private static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
@@ -155,15 +155,8 @@ namespace WikiPreview.Fluent.Plugin
             string displayedName = value.Title;
             double score = displayedName.SearchDistanceScore(searchedText);
             string pageId = value.PageId.ToString();
-            string wikiUrl = WikiRootUrl + displayedName.Replace(' ','_');
+            string wikiUrl = new StringBuilder(displayedName).Replace(' ', '_').ToString();
             BitmapImageResult bitmapImageResult;
-
-            string additionalInfo = "";
-            if (!string.IsNullOrWhiteSpace(resultName))
-            {
-                using var reader = new StringReader(resultName);
-                additionalInfo = reader.ReadLine() ?? resultName;
-            }
 
             if (value.Thumbnail != null)
             {
@@ -177,7 +170,7 @@ namespace WikiPreview.Fluent.Plugin
                 bitmapImageResult = new BitmapImageResult(); // create empty if no image source.
             }
 
-            WikiPreviewSearchResult wikiPreviewSearchResult = new()
+            return new WikiPreviewSearchResult
             {
                 Url = wikiUrl,
                 PreviewImage = bitmapImageResult,
@@ -185,10 +178,8 @@ namespace WikiPreview.Fluent.Plugin
                 ResultName = resultName,
                 SearchedText = searchedText,
                 Score = score,
-                PageId = pageId,
-                AdditionalInformation = additionalInfo
+                PageId = pageId
             };
-            return wikiPreviewSearchResult;
         }
     }
 }
