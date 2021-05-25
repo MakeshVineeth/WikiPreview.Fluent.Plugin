@@ -1,11 +1,4 @@
-﻿using Blast.API.Core.Processes;
-using Blast.API.Processes;
-using Blast.API.Search;
-using Blast.Core.Interfaces;
-using Blast.Core.Objects;
-using Blast.Core.Results;
-using Dasync.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -16,6 +9,13 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Blast.API.Core.Processes;
+using Blast.API.Processes;
+using Blast.API.Search;
+using Blast.Core.Interfaces;
+using Blast.Core.Objects;
+using Blast.Core.Results;
+using Dasync.Collections;
 using TextCopy;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static WikiPreview.Fluent.Plugin.WikiResult;
@@ -27,7 +27,7 @@ namespace WikiPreview.Fluent.Plugin
         private const string SearchAppName = "WikiPreview";
         public const string WikiSearchTagName = "Wiki";
         private readonly SearchApplicationInfo _applicationInfo;
-        private readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
+        private readonly JsonSerializerOptions _serializerOptions = new() {PropertyNameCaseInsensitive = true};
 
         public WikiPreviewSearchApp()
         {
@@ -99,7 +99,7 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
-            { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8 };
+                {SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8};
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
 
@@ -111,7 +111,7 @@ namespace WikiPreview.Fluent.Plugin
                     _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
                         {
                             WikiPreviewSearchResult wikiPreviewSearchResult =
-                                await GenerateSearchResult(entry.Value, searchedText).ConfigureAwait(false);
+                                await GenerateSearchResult(entry.Value, searchedText);
                             await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
                                 .ConfigureAwait(false);
                         }, cancellationToken)
@@ -124,29 +124,26 @@ namespace WikiPreview.Fluent.Plugin
                 yield return item;
         }
 
-        public ValueTask<WikiPreviewSearchResult> GetSearchResultForId(string serializedSearchObjectId)
+        public async ValueTask<WikiPreviewSearchResult> GetSearchResultForId(object serializedSearchObjectId)
         {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(serializedSearchObjectId))
-                    return default;
-
-                string url = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&pageids=" +
-                             serializedSearchObjectId +
-                             "&explaintext&exintro&pilicense=any&pithumbsize=100&format=json";
-
-                using var httpClient = new HttpClient();
-                Task<Wiki> task = httpClient.GetFromJsonAsync<Wiki>(url, _serializerOptions);
-                task.Wait();
-                PageView pageView = task.Result.Query.Pages.Values.First();
-                ValueTask<WikiPreviewSearchResult> wikiTask = GenerateSearchResult(pageView, pageView.Title);
-
-                return wikiTask;
-            }
-            catch (Exception)
-            {
+            string pageId = serializedSearchObjectId as string;
+            if (string.IsNullOrWhiteSpace(pageId))
                 return default;
-            }
+
+            string url = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&pageids=" +
+                         pageId +
+                         "&explaintext&exintro&pilicense=any&pithumbsize=100&format=json";
+
+            using var httpClient = new HttpClient();
+            var wiki = await httpClient.GetFromJsonAsync<Wiki>(url, _serializerOptions);
+            if (wiki == null) return default;
+
+            Dictionary<string, PageView>.ValueCollection pages = wiki.Query.Pages.Values;
+            if (pages is {Count: 0}) return default;
+
+            PageView pageView = pages.First();
+            WikiPreviewSearchResult wikiTask = await GenerateSearchResult(pageView, pageView?.Title);
+            return wikiTask;
         }
 
         private static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
@@ -156,22 +153,21 @@ namespace WikiPreview.Fluent.Plugin
             string displayedName = value.Title;
             double score = displayedName.SearchDistanceScore(searchedText);
             string pageId = value.PageId.ToString();
-            string wikiUrl = WikiRootUrl + displayedName;
+            string wikiUrl = WikiRootUrl + displayedName.Replace(" ","_");
             BitmapImageResult bitmapImageResult;
 
             string additionalInfo = "";
             if (!string.IsNullOrWhiteSpace(resultName))
             {
                 using var reader = new StringReader(resultName);
-                additionalInfo = await reader.ReadLineAsync().ConfigureAwait(false) ?? resultName;
+                additionalInfo = reader.ReadLine() ?? resultName;
             }
 
             if (value.Thumbnail != null)
             {
                 string imgUrl = value.Thumbnail.Source;
                 using var imageClient = new HttpClient();
-                Stream stream = await imageClient.GetStreamAsync(imgUrl)
-                    .ConfigureAwait(false);
+                Stream stream = await imageClient.GetStreamAsync(imgUrl);
                 bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
             }
             else
