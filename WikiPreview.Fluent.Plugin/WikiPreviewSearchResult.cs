@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text;
 using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
 using Blast.Core.Results;
@@ -36,8 +37,6 @@ namespace WikiPreview.Fluent.Plugin
 
         public WikiPreviewSearchResult()
         {
-            PinUniqueId = PageId;
-            SearchObjectId = PageId;
             Tags = SearchTags;
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
@@ -45,16 +44,24 @@ namespace WikiPreview.Fluent.Plugin
         }
 
         public string Url { get; set; }
-        public string PageId { get; set; }
-        public override string Context => Url;
+        public override string Context => WikiRootUrl + Url;
 
         public static string GetFormattedUrl(QueryConfiguration queryConfiguration)
         {
-            return "https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=" +
-                   queryConfiguration.WikiNameSpace + "&gsrsearch=" + queryConfiguration.SearchTerm + "&gsrlimit=" +
-                   queryConfiguration.ResultsCount +
-                   "&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=" +
-                   queryConfiguration.ImageSize;
+            var builder =
+                new StringBuilder("https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=");
+            builder.Append(queryConfiguration.WikiNameSpace);
+
+            builder.Append("&gsrsearch=");
+            builder.Append(queryConfiguration.SearchTerm);
+
+            builder.Append("&gsrlimit=");
+            builder.Append(queryConfiguration.ResultsCount);
+
+            builder.Append("&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=");
+            builder.Append(queryConfiguration.ImageSize);
+
+            return builder.ToString();
         }
 
         protected override void OnSelectedSearchResultChanged()
