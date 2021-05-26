@@ -65,11 +65,9 @@ namespace WikiPreview.Fluent.Plugin
                 IProcessManager managerInstance = ProcessUtils.GetManagerInstance();
                 string actionUrl = wikiPreviewSearchOperation.ActionType switch
                 {
-                    ActionType.Wikipedia => new StringBuilder(WikiRootUrl).Append(wikiPreviewSearchResult.Url)
-                        .ToString(),
-                    ActionType.Wikiwand => new StringBuilder(WikiWandUrl).Append(wikiPreviewSearchResult.Url)
-                        .ToString(),
-                    ActionType.GoogleSearch => new StringBuilder(GoogleSearchUrl).Append(displayedName).ToString(),
+                    ActionType.Wikipedia => WikiRootUrl + wikiPreviewSearchResult.Url,
+                    ActionType.Wikiwand => WikiWandUrl + wikiPreviewSearchResult.Url,
+                    ActionType.GoogleSearch => GoogleSearchUrl + displayedName,
                     _ => null
                 };
 
@@ -77,7 +75,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else
             {
-                string wikiUrl = new StringBuilder(WikiRootUrl).Append(wikiPreviewSearchResult.Url).ToString();
+                string wikiUrl = WikiRootUrl + wikiPreviewSearchResult.Url;
                 Clipboard.SetText(wikiUrl);
             }
 
@@ -115,8 +113,10 @@ namespace WikiPreview.Fluent.Plugin
                         {
                             WikiPreviewSearchResult wikiPreviewSearchResult =
                                 await GenerateSearchResult(entry.Value, searchedText);
-                            await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
-                                .ConfigureAwait(false);
+
+                            if (wikiPreviewSearchResult != null)
+                                await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
+                                    .ConfigureAwait(false);
                         }, cancellationToken)
                         .ContinueWith(_ => channel.Writer.Complete(), CancellationToken.None);
                 else
@@ -167,7 +167,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else
             {
-                bitmapImageResult = new BitmapImageResult(); // create empty if no image source.
+                bitmapImageResult = null;
             }
 
             return new WikiPreviewSearchResult
@@ -178,7 +178,8 @@ namespace WikiPreview.Fluent.Plugin
                 ResultName = resultName,
                 SearchedText = searchedText,
                 Score = score,
-                PageId = pageId
+                SearchObjectId = pageId,
+                PinUniqueId = pageId
             };
         }
     }

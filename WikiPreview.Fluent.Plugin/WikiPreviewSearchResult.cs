@@ -37,8 +37,6 @@ namespace WikiPreview.Fluent.Plugin
 
         public WikiPreviewSearchResult()
         {
-            PinUniqueId = PageId;
-            SearchObjectId = PageId;
             Tags = SearchTags;
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
@@ -46,8 +44,7 @@ namespace WikiPreview.Fluent.Plugin
         }
 
         public string Url { get; set; }
-        public string PageId { get; set; }
-        public override string Context => new StringBuilder(WikiRootUrl).Append(Url).ToString();
+        public override string Context => WikiRootUrl + Url;
 
         public static string GetFormattedUrl(QueryConfiguration queryConfiguration)
         {
