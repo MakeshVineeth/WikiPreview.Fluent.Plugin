@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
@@ -127,9 +126,9 @@ namespace WikiPreview.Fluent.Plugin
                 yield return item;
         }
 
-        public async ValueTask<WikiPreviewSearchResult> GetSearchResultForId(object serializedSearchObjectId)
+        public async ValueTask<WikiPreviewSearchResult> GetSearchResultForId(object searchObjectId)
         {
-            string pageId = serializedSearchObjectId as string;
+            string pageId = searchObjectId as string;
             if (string.IsNullOrWhiteSpace(pageId))
                 return default;
 
@@ -155,7 +154,7 @@ namespace WikiPreview.Fluent.Plugin
             string displayedName = value.Title;
             double score = displayedName.SearchDistanceScore(searchedText);
             string pageId = value.PageId.ToString();
-            string wikiUrl = new StringBuilder(displayedName).Replace(' ', '_').ToString();
+            string wikiUrl = displayedName.Replace(' ', '_').ToString();
             BitmapImageResult bitmapImageResult;
 
             if (value.Thumbnail != null)
