@@ -27,7 +27,7 @@ namespace WikiPreview.Fluent.Plugin
         private const string SearchAppName = "WikiPreview";
         public const string WikiSearchTagName = "Wiki";
         private readonly SearchApplicationInfo _applicationInfo;
-        private readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
+        private readonly JsonSerializerOptions _serializerOptions = new() {PropertyNameCaseInsensitive = true};
 
         public WikiPreviewSearchApp()
         {
@@ -99,7 +99,7 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
-            { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8 };
+                {SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8};
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
 
@@ -126,7 +126,7 @@ namespace WikiPreview.Fluent.Plugin
                 yield return item;
         }
 
-        public async ValueTask<WikiPreviewSearchResult> GetSearchResultForId(object searchObjectId)
+        async ValueTask<ISearchResult> ISearchApplication.GetSearchResultForId(object searchObjectId)
         {
             string pageId = searchObjectId as string;
             if (string.IsNullOrWhiteSpace(pageId))
@@ -141,7 +141,7 @@ namespace WikiPreview.Fluent.Plugin
             if (wiki == null) return default;
 
             Dictionary<string, PageView>.ValueCollection pages = wiki.Query.Pages.Values;
-            if (pages is { Count: 0 }) return default;
+            if (pages is {Count: 0}) return default;
 
             PageView pageView = pages.First();
             return await GenerateSearchResult(pageView, pageView?.Title);
