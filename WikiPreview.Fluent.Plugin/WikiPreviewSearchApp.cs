@@ -126,7 +126,7 @@ namespace WikiPreview.Fluent.Plugin
                 yield return item;
         }
 
-        async ValueTask<ISearchResult> ISearchApplication.GetSearchResultForId(object searchObjectId)
+        public async ValueTask<ISearchResult> GetSearchResultForId(object searchObjectId)
         {
             string pageId = searchObjectId as string;
             if (string.IsNullOrWhiteSpace(pageId))
