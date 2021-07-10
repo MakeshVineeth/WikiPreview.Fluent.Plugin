@@ -26,6 +26,7 @@ namespace WikiPreview.Fluent.Plugin
     {
         private const string SearchAppName = "WikiPreview";
         public const string WikiSearchTagName = "Wiki";
+        private const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
         private readonly SearchApplicationInfo _applicationInfo;
         private readonly JsonSerializerOptions _serializerOptions = new() {PropertyNameCaseInsensitive = true};
 
@@ -102,6 +103,7 @@ namespace WikiPreview.Fluent.Plugin
                 {SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8};
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
 
             var channel = Channel.CreateUnbounded<WikiPreviewSearchResult>();
 
@@ -137,6 +139,7 @@ namespace WikiPreview.Fluent.Plugin
                          "&explaintext&exintro&pilicense=any&pithumbsize=100&format=json";
 
             using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
             var wiki = await httpClient.GetFromJsonAsync<Wiki>(url, _serializerOptions);
             if (wiki == null) return default;
 
@@ -161,6 +164,7 @@ namespace WikiPreview.Fluent.Plugin
             {
                 string imgUrl = value.Thumbnail.Source;
                 using var imageClient = new HttpClient();
+                imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
                 Stream stream = await imageClient.GetStreamAsync(imgUrl);
                 bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
             }

@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-    <PackageReference Include="Blast.API" Version="0.9.76-beta" />
+    <PackageReference Include="Blast.API" Version="0.9.76.5-beta" />
     <PackageReference Include="TextCopy" Version="1.5.1" />
   </ItemGroup>
 
