@@ -22,7 +22,7 @@ namespace WikiPreview.Fluent.Plugin
                 OpenWiki,
                 OpenWikiWand,
                 OpenGoogle,
-                new CopySearchOperation("Copy URL")
+                new CopySearchOperation("Copy URL") {Description = "Copies the Wikipedia Page URL to Clipboard."}
             };
 
         public static readonly ObservableCollection<SearchTag> SearchTags = new()

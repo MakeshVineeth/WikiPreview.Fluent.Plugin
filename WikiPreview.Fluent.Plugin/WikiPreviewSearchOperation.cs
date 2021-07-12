@@ -23,11 +23,11 @@ namespace WikiPreview.Fluent.Plugin
         public ActionType ActionType { get; }
 
         public static WikiPreviewSearchOperation OpenWiki { get; } =
-            new(ActionType.Wikipedia, "Open in Wikipedia", "Opens the article on Wikipedia.", "\uE71B");
+            new(ActionType.Wikipedia, "Open in Wikipedia", "Opens the article in Wikipedia.", "\uE71B");
 
         public static WikiPreviewSearchOperation OpenWikiWand { get; } =
             new(ActionType.Wikiwand, "Open in Wikiwand",
-                "Opens the Wikipedia article in Wikiwand with a custom viewing experience.", "\uE774");
+                "Opens the Wikipedia article with a modern look.", "\uE774");
 
         public static WikiPreviewSearchOperation OpenGoogle { get; } =
             new(ActionType.GoogleSearch, "Search in Google", "Search with Google.", "\uE721");
