@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
@@ -29,6 +30,7 @@ namespace WikiPreview.Fluent.Plugin
         private const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
         private readonly SearchApplicationInfo _applicationInfo;
         private readonly JsonSerializerOptions _serializerOptions = new() {PropertyNameCaseInsensitive = true};
+        private BitmapImageResult _bitmapLogo;
 
         public WikiPreviewSearchApp()
         {
@@ -84,6 +86,11 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask LoadSearchApplicationAsync()
         {
+            var assembly = Assembly.GetExecutingAssembly();
+            const string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
+            Stream stream = assembly.GetManifestResourceStream(resourceName);
+            var image = new Bitmap(stream!);
+            _bitmapLogo = new BitmapImageResult(image);
             return ValueTask.CompletedTask;
         }
 
@@ -147,7 +154,7 @@ namespace WikiPreview.Fluent.Plugin
             return await GenerateSearchResult(pageView, pageView?.Title);
         }
 
-        private static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
+        private async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
             string searchedText)
         {
             string resultName = value.Extract;
@@ -167,7 +174,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else
             {
-                bitmapImageResult = null;
+                bitmapImageResult = _bitmapLogo;
             }
 
             return new WikiPreviewSearchResult
