@@ -90,13 +90,10 @@ namespace WikiPreview.Fluent.Plugin
         public async IAsyncEnumerable<ISearchResult> SearchAsync(SearchRequest searchRequest,
             CancellationToken cancellationToken)
         {
-            string searchedTag = searchRequest.SearchedTag;
             string searchedText = searchRequest.SearchedText;
             searchedText = searchedText.Trim();
 
-            if (string.IsNullOrWhiteSpace(searchedTag) ||
-                !searchedTag.Equals(WikiSearchTagName, StringComparison.OrdinalIgnoreCase) ||
-                string.IsNullOrWhiteSpace(searchedText))
+            if (string.IsNullOrWhiteSpace(searchedText))
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
