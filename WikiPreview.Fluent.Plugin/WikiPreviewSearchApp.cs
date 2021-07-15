@@ -43,7 +43,8 @@ namespace WikiPreview.Fluent.Plugin
                 SearchTagOnly = true,
                 ApplicationIconGlyph = SearchResultIcon,
                 SearchAllTime = ApplicationSearchTime.Fast,
-                DefaultSearchTags = SearchTags
+                DefaultSearchTags = SearchTags,
+                PluginName = "Wikipedia Preview"
             };
         }
 
@@ -97,10 +98,13 @@ namespace WikiPreview.Fluent.Plugin
         public async IAsyncEnumerable<ISearchResult> SearchAsync(SearchRequest searchRequest,
             CancellationToken cancellationToken)
         {
+            string searchedTag = searchRequest.SearchedTag;
             string searchedText = searchRequest.SearchedText;
             searchedText = searchedText.Trim();
 
-            if (string.IsNullOrWhiteSpace(searchedText))
+            if (!string.IsNullOrWhiteSpace(searchedTag) &&
+                !searchedTag.Equals(WikiSearchTagName, StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(searchedText))
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
