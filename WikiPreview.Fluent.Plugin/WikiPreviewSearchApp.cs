@@ -1,11 +1,4 @@
-﻿using Blast.API.Core.Processes;
-using Blast.API.Processes;
-using Blast.API.Search;
-using Blast.Core.Interfaces;
-using Blast.Core.Objects;
-using Blast.Core.Results;
-using Dasync.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -17,6 +10,13 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Blast.API.Core.Processes;
+using Blast.API.Processes;
+using Blast.API.Search;
+using Blast.Core.Interfaces;
+using Blast.Core.Objects;
+using Blast.Core.Results;
+using Dasync.Collections;
 using TextCopy;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static WikiPreview.Fluent.Plugin.WikiResult;
@@ -29,7 +29,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string WikiSearchTagName = "Wiki";
         private const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
         private readonly SearchApplicationInfo _applicationInfo;
-        private readonly JsonSerializerOptions _serializerOptions = new() {PropertyNameCaseInsensitive = true};
+        private readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
         private BitmapImageResult _bitmapLogo;
 
         public WikiPreviewSearchApp()
@@ -59,6 +59,7 @@ namespace WikiPreview.Fluent.Plugin
                 throw new InvalidCastException(nameof(WikiPreviewSearchResult));
 
             string displayedName = wikiPreviewSearchResult.DisplayedName;
+
             if (string.IsNullOrWhiteSpace(displayedName))
                 return new ValueTask<IHandleResult>(new HandleResult(true, false));
 
@@ -76,8 +77,19 @@ namespace WikiPreview.Fluent.Plugin
 
                 if (!string.IsNullOrWhiteSpace(actionUrl)) managerInstance.StartNewProcess(actionUrl);
             }
+            else if (wikiPreviewSearchResult.SelectedOperation.OperationName == CopyContentsStr)
+            {
+                string contents = wikiPreviewSearchResult.ResultName;
+                if (!string.IsNullOrWhiteSpace(contents))
+                    Clipboard.SetText(contents);
+            }
             else
             {
+                string pageUrl = wikiPreviewSearchResult.Url;
+
+                if (string.IsNullOrWhiteSpace(pageUrl))
+                    return new ValueTask<IHandleResult>(new HandleResult(true, false));
+
                 string wikiUrl = WikiRootUrl + wikiPreviewSearchResult.Url;
                 Clipboard.SetText(wikiUrl);
             }
@@ -89,9 +101,7 @@ namespace WikiPreview.Fluent.Plugin
         {
             var assembly = Assembly.GetExecutingAssembly();
             const string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
-            Stream stream = assembly.GetManifestResourceStream(resourceName);
-            var image = new Bitmap(stream!);
-            _bitmapLogo = new BitmapImageResult(image);
+            _bitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
             return ValueTask.CompletedTask;
         }
 
@@ -108,7 +118,7 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
-                {SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8};
+                { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8 };
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
@@ -152,7 +162,7 @@ namespace WikiPreview.Fluent.Plugin
             if (wiki == null) return default;
 
             Dictionary<string, PageView>.ValueCollection pages = wiki.Query.Pages.Values;
-            if (pages is {Count: 0}) return default;
+            if (pages is { Count: 0 }) return default;
 
             PageView pageView = pages.First();
             return await GenerateSearchResult(pageView, pageView?.Title);
