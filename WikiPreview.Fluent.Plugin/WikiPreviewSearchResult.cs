@@ -1,6 +1,11 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text;
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Blast.API.Graphics;
 using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
 using Blast.Core.Results;
@@ -17,6 +22,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string SearchResultIcon = "\uEDE4";
         public const string TagDescription = "Search in Wikipedia";
         public const string CopyContentsStr = "Copy Contents";
+        public const int FixedImageSize = 100;
 
         public static readonly ObservableCollection<ISearchOperation> SupportedOperationCollections
             = new()
@@ -39,12 +45,33 @@ namespace WikiPreview.Fluent.Plugin
             }
         };
 
-        public WikiPreviewSearchResult()
+        public WikiPreviewSearchResult(string resultName)
         {
             Tags = SearchTags;
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
             ResultType = WikiSearchTagName;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                UseCustomControl = true;
+                var wikiDescription = new TextBlock
+                {
+                    Text = resultName, Padding = Thickness.Parse("10"), TextWrapping = TextWrapping.Wrap,
+                    TextTrimming = TextTrimming.WordEllipsis, MaxLines = 4
+                };
+
+                var stackPanel = new StackPanel();
+                var imageControl = new Image
+                {
+                    Source = PreviewImage.ConvertToAvaloniaBitmap(), MaxHeight = FixedImageSize,
+                    MaxWidth = FixedImageSize
+                };
+
+                stackPanel.Children.Add(imageControl);
+                stackPanel.Children.Add(wikiDescription);
+                CustomControl = stackPanel;
+            });
         }
 
         public string Url { get; set; }

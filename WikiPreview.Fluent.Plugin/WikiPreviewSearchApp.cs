@@ -118,7 +118,7 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
 
             QueryConfiguration queryConfiguration = new()
-                { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = 100, ResultsCount = 8 };
+                { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = FixedImageSize, ResultsCount = 8 };
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
@@ -191,12 +191,11 @@ namespace WikiPreview.Fluent.Plugin
                 bitmapImageResult = _bitmapLogo;
             }
 
-            return new WikiPreviewSearchResult
+            return new WikiPreviewSearchResult(resultName)
             {
                 Url = wikiUrl,
                 PreviewImage = bitmapImageResult,
                 DisplayedName = displayedName,
-                ResultName = resultName,
                 SearchedText = searchedText,
                 Score = score,
                 SearchObjectId = pageId,
