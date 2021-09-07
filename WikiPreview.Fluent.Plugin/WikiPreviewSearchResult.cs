@@ -60,8 +60,8 @@ namespace WikiPreview.Fluent.Plugin
             UseCustomControl = true;
             var wikiDescription = new TextBlock
             {
-                Text = WikiText, Padding = Thickness.Parse("10"), TextWrapping = TextWrapping.Wrap,
-                TextTrimming = TextTrimming.WordEllipsis, MaxLines = 10
+                Text = WikiText, Padding = Thickness.Parse("0 10 0 0"), TextWrapping = TextWrapping.Wrap,
+                TextTrimming = TextTrimming.WordEllipsis
             };
 
             var stackPanel = new StackPanel();
@@ -73,7 +73,15 @@ namespace WikiPreview.Fluent.Plugin
 
             stackPanel.Children.Add(imageControl);
             stackPanel.Children.Add(wikiDescription);
-            CustomControl = stackPanel;
+
+            var scrollViewer = new ScrollViewer
+            {
+                Content = stackPanel,
+                MaxHeight = 200,
+                Margin = Thickness.Parse("10")
+            };
+
+            CustomControl = scrollViewer;
         }
 
         public string Url { get; set; }
