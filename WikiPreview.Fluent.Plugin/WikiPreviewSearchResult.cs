@@ -4,7 +4,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Blast.API.Graphics;
 using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
@@ -51,27 +50,30 @@ namespace WikiPreview.Fluent.Plugin
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
             ResultType = WikiSearchTagName;
+            WikiText = resultName;
+        }
 
-            Dispatcher.UIThread.Post(() =>
+        private string WikiText { get; }
+
+        public override void OnFocusLoad(ISearchResult old, bool hasUserInteracted)
+        {
+            UseCustomControl = true;
+            var wikiDescription = new TextBlock
             {
-                UseCustomControl = true;
-                var wikiDescription = new TextBlock
-                {
-                    Text = resultName, Padding = Thickness.Parse("10"), TextWrapping = TextWrapping.Wrap,
-                    TextTrimming = TextTrimming.WordEllipsis, MaxLines = 4
-                };
+                Text = WikiText, Padding = Thickness.Parse("10"), TextWrapping = TextWrapping.Wrap,
+                TextTrimming = TextTrimming.WordEllipsis, MaxLines = 10
+            };
 
-                var stackPanel = new StackPanel();
-                var imageControl = new Image
-                {
-                    Source = PreviewImage.ConvertToAvaloniaBitmap(), MaxHeight = FixedImageSize,
-                    MaxWidth = FixedImageSize
-                };
+            var stackPanel = new StackPanel();
+            var imageControl = new Image
+            {
+                Source = PreviewImage.ConvertToAvaloniaBitmap(), MaxHeight = FixedImageSize,
+                MaxWidth = FixedImageSize
+            };
 
-                stackPanel.Children.Add(imageControl);
-                stackPanel.Children.Add(wikiDescription);
-                CustomControl = stackPanel;
-            });
+            stackPanel.Children.Add(imageControl);
+            stackPanel.Children.Add(wikiDescription);
+            CustomControl = stackPanel;
         }
 
         public string Url { get; set; }
