@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Blast.API.Graphics;
 using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
@@ -22,7 +23,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string SearchResultIcon = "\uEDE4";
         public const string TagDescription = "Search in Wikipedia";
         public const string CopyContentsStr = "Copy Contents";
-        public const int FixedImageSize = 100;
+        public const int FixedImageSize = 120;
 
         public static readonly ObservableCollection<ISearchOperation> SupportedOperationCollections
             = new()
@@ -69,16 +70,19 @@ namespace WikiPreview.Fluent.Plugin
             };
 
             var stackPanel = new StackPanel();
+            Bitmap bitmap = PreviewImage.ConvertToAvaloniaBitmap();
             var imageControl = new Border
             {
-                Background = new ImageBrush(PreviewImage.ConvertToAvaloniaBitmap())
+                Background = new ImageBrush(bitmap)
                 {
                     Stretch = Stretch.UniformToFill
                 },
                 CornerRadius = new CornerRadius(5.0),
                 BorderThickness = new Thickness(5.0),
-                Height = FixedImageSize,
-                Width = FixedImageSize
+                Height = bitmap.Size.Height,
+                Width = bitmap.Size.Width,
+                MaxHeight = FixedImageSize,
+                MaxWidth = FixedImageSize
             };
 
             stackPanel.Children.Add(imageControl);
