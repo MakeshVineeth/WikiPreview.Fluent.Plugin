@@ -56,20 +56,29 @@ namespace WikiPreview.Fluent.Plugin
 
         private string WikiText { get; }
 
+        public string Url { get; set; }
+        public override string Context => WikiRootUrl + Url;
+
         public override void OnFocusLoad(ISearchResult old, bool hasUserInteracted)
         {
             UseCustomControl = true;
             var wikiDescription = new TextBlock
             {
-                Text = WikiText, Padding = Thickness.Parse("0 10 0 0"), TextWrapping = TextWrapping.Wrap,
+                Text = WikiText, Padding = new Thickness(0, 5, 0, 0), TextWrapping = TextWrapping.Wrap,
                 TextTrimming = TextTrimming.WordEllipsis
             };
 
             var stackPanel = new StackPanel();
-            var imageControl = new Image
+            var imageControl = new Border
             {
-                Source = PreviewImage.ConvertToAvaloniaBitmap(), MaxHeight = FixedImageSize,
-                MaxWidth = FixedImageSize
+                Background = new ImageBrush(PreviewImage.ConvertToAvaloniaBitmap())
+                {
+                    Stretch = Stretch.UniformToFill
+                },
+                CornerRadius = new CornerRadius(5.0),
+                BorderThickness = new Thickness(5.0),
+                Height = FixedImageSize,
+                Width = FixedImageSize
             };
 
             stackPanel.Children.Add(imageControl);
@@ -79,15 +88,12 @@ namespace WikiPreview.Fluent.Plugin
             {
                 Content = stackPanel,
                 MaxHeight = 200,
-                Margin = Thickness.Parse("10"),
+                Margin = new Thickness(5.0),
                 VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
             };
 
             CustomControl = scrollViewer;
         }
-
-        public string Url { get; set; }
-        public override string Context => WikiRootUrl + Url;
 
         public static string GetFormattedUrl(QueryConfiguration queryConfiguration)
         {
