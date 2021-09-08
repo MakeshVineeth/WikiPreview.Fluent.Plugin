@@ -2,6 +2,7 @@
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Blast.API.Graphics;
@@ -78,7 +79,8 @@ namespace WikiPreview.Fluent.Plugin
             {
                 Content = stackPanel,
                 MaxHeight = 200,
-                Margin = Thickness.Parse("10")
+                Margin = Thickness.Parse("10"),
+                VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
             };
 
             CustomControl = scrollViewer;
