@@ -55,7 +55,7 @@ namespace WikiPreview.Fluent.Plugin
             WikiText = resultName;
         }
 
-        private string WikiText { get; }
+        public string WikiText { get; }
 
         public string Url { get; set; }
         public override string Context => WikiRootUrl + Url;
