@@ -17,7 +17,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string SearchResultIcon = "\uEDE4";
         public const string TagDescription = "Search in Wikipedia";
         public const string CopyContentsStr = "Copy Contents";
-        public const int FixedImageSize = 120;
+        public const int FixedImageSize = 150;
 
         public static readonly ObservableCollection<ISearchOperation> SupportedOperationCollections
             = new()

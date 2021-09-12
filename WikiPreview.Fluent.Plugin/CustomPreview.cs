@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Windows.UI.ViewManagement;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -31,24 +32,45 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask<Control> CreatePreviewControl(ISearchResult searchResult)
         {
-            Control control = GeneratePreview(searchResult.ResultName,
+            Control control = GeneratePreview(searchResult.DisplayedName, searchResult.ResultName,
                 searchResult.PreviewImage.ConvertToAvaloniaBitmap());
             return new ValueTask<Control>(control);
         }
 
         public PreviewBuilderDescriptor PreviewBuilderDescriptor { get; }
 
-        private static Control GeneratePreview(string text, IBitmap bitmap)
+        private static Control GeneratePreview(string title, string text, IBitmap bitmap)
         {
+            // double the new lines for better reading.
             text = Regex.Replace(text, @"\r\n?|\n", NewLine + NewLine);
 
+            // creates heading.
+            var header = new TextBlock
+            {
+                Text = title,
+                FontWeight = FontWeight.SemiBold,
+                FontSize = 20.0
+            };
+
+            // creates separator
+            var defaultTheme = new UISettings();
+            string uiTheme =  defaultTheme.GetColorValue(UIColorType.Foreground).ToString();
+            Color lineColor = Color.Parse(uiTheme);
+
+            var separator = new Border
+            {
+                BorderThickness = new Thickness(0.6), Background = new SolidColorBrush(lineColor),
+                Margin = new Thickness(0, 5)
+            };
+
+            // creates article content.
             var wikiDescription = new TextBlock
             {
-                Text = text, Padding = new Thickness(0, 5, 0, 0), TextWrapping = TextWrapping.Wrap,
+                Text = text, Padding = new Thickness(0, 10, 0, 0), TextWrapping = TextWrapping.Wrap,
                 TextTrimming = TextTrimming.WordEllipsis
             };
 
-            var stackPanel = new StackPanel();
+            // creates image control.
             var imageControl = new Border
             {
                 Background = new ImageBrush(bitmap)
@@ -63,13 +85,16 @@ namespace WikiPreview.Fluent.Plugin
                 MaxWidth = FixedImageSize
             };
 
+            var stackPanel = new StackPanel();
+            stackPanel.Children.Add(header);
+            stackPanel.Children.Add(separator);
             stackPanel.Children.Add(imageControl);
             stackPanel.Children.Add(wikiDescription);
 
             var scrollViewer = new ScrollViewer
             {
                 Content = stackPanel,
-                Margin = new Thickness(5.0),
+                Margin = new Thickness(10.0),
                 VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
             };
 
