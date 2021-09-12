@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Avalonia;
@@ -13,10 +17,12 @@ using Avalonia.Media.Imaging;
 using Blast.API.Core.Processes;
 using Blast.API.Graphics;
 using Blast.API.Processes;
+using Blast.API.Search;
 using Blast.Core.Interfaces;
 using TextCopy;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static System.Environment;
+using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -38,29 +44,74 @@ namespace WikiPreview.Fluent.Plugin
 
         public bool CanBuildPreviewForResult(ISearchResult searchResult)
         {
-            return !string.IsNullOrWhiteSpace(searchResult.SearchApp) &&
-                   searchResult.SearchApp.Equals(WikiPreviewSearchApp.SearchAppName,
-                       StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(searchResult.SearchApp)) return false;
+
+            if (searchResult.SearchApp.Equals(SearchAppName,
+                StringComparison.OrdinalIgnoreCase)) return true;
+
+            string host = searchResult.Context;
+            if (string.IsNullOrWhiteSpace(host)) return false;
+
+            bool result = Uri.TryCreate(host, UriKind.Absolute, out Uri uri)
+                          && uri.Scheme == Uri.UriSchemeHttps;
+
+            if (!result) return false;
+
+            host = uri.Host[3..];
+            return host.StartsWith("wikipedia.org");
         }
 
         public ValueTask<Control> CreatePreviewControl(ISearchResult searchResult)
         {
-            if (searchResult is not WikiPreviewSearchResult wikiPreviewSearchResult)
-                throw new InvalidCastException(nameof(wikiPreviewSearchResult));
+            if (searchResult is WikiPreviewSearchResult result)
+            {
+                Control control = GeneratePreview(result);
+                return new ValueTask<Control>(control);
+            }
 
-            Control control = GeneratePreview(wikiPreviewSearchResult);
-            return new ValueTask<Control>(control);
+            string pageName = searchResult.Context.Split('/').Last();
+            return GenerateElement(pageName);
         }
 
         public PreviewBuilderDescriptor PreviewBuilderDescriptor { get; }
 
+        private static async ValueTask<Control> GenerateElement(string pageName)
+        {
+            WikiPreviewSearchResult searchResult = await GetSearchResultForId(pageName);
+            Control control = GeneratePreview(searchResult);
+            return control;
+        }
+
         private static Control GeneratePreview(WikiPreviewSearchResult searchResult)
         {
             string text = searchResult.ResultName;
-            Bitmap bitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
 
             // double the new lines for better reading.
             text = Regex.Replace(text, @"\r\n?|\n", NewLine + NewLine);
+
+            // StackPanel to store image and text.
+            var stackPanel = new StackPanel();
+
+            // creates image control.
+            if (searchResult.PreviewImage is { IsEmpty: false })
+            {
+                Bitmap bitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
+                var imageControl = new Border
+                {
+                    Background = new ImageBrush(bitmap)
+                    {
+                        Stretch = Stretch.UniformToFill
+                    },
+                    CornerRadius = new CornerRadius(5.0),
+                    BorderThickness = new Thickness(5.0),
+                    Height = bitmap.Size.Height,
+                    Width = bitmap.Size.Width,
+                    MaxHeight = FixedImageSize,
+                    MaxWidth = FixedImageSize
+                };
+
+                stackPanel.Children.Add(imageControl);
+            }
 
             // creates article content.
             var wikiDescription = new TextBlock
@@ -69,24 +120,6 @@ namespace WikiPreview.Fluent.Plugin
                 TextTrimming = TextTrimming.WordEllipsis
             };
 
-            // creates image control.
-            var imageControl = new Border
-            {
-                Background = new ImageBrush(bitmap)
-                {
-                    Stretch = Stretch.UniformToFill
-                },
-                CornerRadius = new CornerRadius(5.0),
-                BorderThickness = new Thickness(5.0),
-                Height = bitmap.Size.Height,
-                Width = bitmap.Size.Width,
-                MaxHeight = FixedImageSize,
-                MaxWidth = FixedImageSize
-            };
-
-            // StackPanel to store image and text.
-            var stackPanel = new StackPanel();
-            stackPanel.Children.Add(imageControl);
             stackPanel.Children.Add(wikiDescription);
 
             var scrollViewer = new ScrollViewer
@@ -174,6 +207,48 @@ namespace WikiPreview.Fluent.Plugin
             else if (buttonContent.Contains(GoogleStr))
                 managerInstance.StartNewProcess(GoogleSearchUrl + buttonTag);
             else if (buttonContent.Contains(CopyStr)) Clipboard.SetText(buttonTag);
+        }
+
+        private static async ValueTask<WikiPreviewSearchResult> GetSearchResultForId(string searchObjectId)
+        {
+            if (string.IsNullOrWhiteSpace(searchObjectId))
+                return default;
+
+            string url = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&titles=" +
+                         searchObjectId +
+                         "&explaintext&exintro&pilicense=any&pithumbsize=100&format=json";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
+            var wiki = await httpClient.GetFromJsonAsync<WikiResult.Wiki>(url, SerializerOptions);
+            if (wiki == null) return default;
+
+            Dictionary<string, WikiResult.PageView>.ValueCollection pages = wiki.Query.Pages.Values;
+            if (pages is { Count: 0 }) return default;
+
+            WikiResult.PageView pageView = pages.First();
+            return GenerateSearchResult(pageView, pageView?.Title);
+        }
+
+
+        private static WikiPreviewSearchResult GenerateSearchResult(WikiResult.PageView value,
+            string searchedText)
+        {
+            string resultName = value.Extract;
+            string displayedName = value.Title;
+            double score = displayedName.SearchDistanceScore(searchedText);
+            string pageId = value.PageId.ToString();
+            string wikiUrl = displayedName.Replace(' ', '_');
+
+            return new WikiPreviewSearchResult(resultName)
+            {
+                Url = wikiUrl,
+                DisplayedName = displayedName,
+                SearchedText = searchedText,
+                Score = score,
+                SearchObjectId = pageId,
+                PinUniqueId = pageId
+            };
         }
     }
 }

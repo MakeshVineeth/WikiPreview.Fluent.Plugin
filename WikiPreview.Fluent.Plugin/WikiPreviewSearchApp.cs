@@ -27,9 +27,9 @@ namespace WikiPreview.Fluent.Plugin
     {
         public const string SearchAppName = "WikiPreview";
         public const string WikiSearchTagName = "Wiki";
-        private const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
+        public const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
+        public static readonly JsonSerializerOptions SerializerOptions = new() { PropertyNameCaseInsensitive = true };
         private readonly SearchApplicationInfo _applicationInfo;
-        private readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
         private BitmapImageResult _bitmapLogo;
 
         public WikiPreviewSearchApp()
@@ -125,7 +125,7 @@ namespace WikiPreview.Fluent.Plugin
 
             var channel = Channel.CreateUnbounded<WikiPreviewSearchResult>();
 
-            _ = httpClient.GetFromJsonAsync<Wiki>(url, _serializerOptions, cancellationToken).ContinueWith(task =>
+            _ = httpClient.GetFromJsonAsync<Wiki>(url, SerializerOptions, cancellationToken).ContinueWith(task =>
             {
                 if (task.IsCompletedSuccessfully)
                     _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
@@ -158,7 +158,7 @@ namespace WikiPreview.Fluent.Plugin
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
-            var wiki = await httpClient.GetFromJsonAsync<Wiki>(url, _serializerOptions);
+            var wiki = await httpClient.GetFromJsonAsync<Wiki>(url, SerializerOptions);
             if (wiki == null) return default;
 
             Dictionary<string, PageView>.ValueCollection pages = wiki.Query.Pages.Values;
