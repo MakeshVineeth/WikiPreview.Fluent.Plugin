@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Blast.API.Core.Processes;
@@ -148,7 +149,8 @@ namespace WikiPreview.Fluent.Plugin
                 Margin = new Thickness(0, 0, 5, 0),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
-                Tag = tag
+                Tag = tag,
+                [!TemplatedControl.BackgroundProperty] = new DynamicResourceExtension("TextControlBackground")
             };
 
             button.Click += ButtonOnClick;
