@@ -1,12 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Blast.API.Graphics;
 using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
 using Blast.Core.Results;
@@ -46,58 +40,20 @@ namespace WikiPreview.Fluent.Plugin
             }
         };
 
+        private readonly CustomPreview _customPreview = new();
+
         public WikiPreviewSearchResult(string resultName)
         {
             Tags = SearchTags;
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
             ResultType = WikiSearchTagName;
-            WikiText = resultName;
+            ResultName = resultName;
+            ResultPreviewControlBuilder = _customPreview;
         }
-
-        public string WikiText { get; }
 
         public string Url { get; set; }
         public override string Context => WikiRootUrl + Url;
-
-        public override void OnFocusLoad(ISearchResult old, bool hasUserInteracted)
-        {
-            UseCustomControl = true;
-            var wikiDescription = new TextBlock
-            {
-                Text = WikiText, Padding = new Thickness(0, 5, 0, 0), TextWrapping = TextWrapping.Wrap,
-                TextTrimming = TextTrimming.WordEllipsis
-            };
-
-            var stackPanel = new StackPanel();
-            Bitmap bitmap = PreviewImage.ConvertToAvaloniaBitmap();
-            var imageControl = new Border
-            {
-                Background = new ImageBrush(bitmap)
-                {
-                    Stretch = Stretch.UniformToFill
-                },
-                CornerRadius = new CornerRadius(5.0),
-                BorderThickness = new Thickness(5.0),
-                Height = bitmap.Size.Height,
-                Width = bitmap.Size.Width,
-                MaxHeight = FixedImageSize,
-                MaxWidth = FixedImageSize
-            };
-
-            stackPanel.Children.Add(imageControl);
-            stackPanel.Children.Add(wikiDescription);
-
-            var scrollViewer = new ScrollViewer
-            {
-                Content = stackPanel,
-                MaxHeight = 200,
-                Margin = new Thickness(5.0),
-                VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
-            };
-
-            CustomControl = scrollViewer;
-        }
 
         public static string GetFormattedUrl(QueryConfiguration queryConfiguration)
         {
@@ -119,6 +75,7 @@ namespace WikiPreview.Fluent.Plugin
 
         protected override void OnSelectedSearchResultChanged()
         {
+            // Empty
         }
     }
 }

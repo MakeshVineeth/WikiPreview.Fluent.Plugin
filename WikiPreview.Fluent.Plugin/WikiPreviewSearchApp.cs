@@ -79,7 +79,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else if (wikiPreviewSearchResult.SelectedOperation.OperationName == CopyContentsStr)
             {
-                string contents = wikiPreviewSearchResult.WikiText;
+                string contents = wikiPreviewSearchResult.ResultName;
                 if (!string.IsNullOrWhiteSpace(contents))
                     Clipboard.SetText(contents);
             }
