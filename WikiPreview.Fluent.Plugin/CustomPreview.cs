@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.UI.ViewManagement;
 using Avalonia;
@@ -27,7 +28,9 @@ namespace WikiPreview.Fluent.Plugin
 
         public bool CanBuildPreviewForResult(ISearchResult searchResult)
         {
-            return true;
+            return !string.IsNullOrWhiteSpace(searchResult.SearchApp) &&
+                   searchResult.SearchApp.Equals(WikiPreviewSearchApp.SearchAppName,
+                       StringComparison.OrdinalIgnoreCase);
         }
 
         public ValueTask<Control> CreatePreviewControl(ISearchResult searchResult)
@@ -54,7 +57,7 @@ namespace WikiPreview.Fluent.Plugin
 
             // creates separator
             var defaultTheme = new UISettings();
-            string uiTheme =  defaultTheme.GetColorValue(UIColorType.Foreground).ToString();
+            string uiTheme = defaultTheme.GetColorValue(UIColorType.Foreground).ToString();
             Color lineColor = Color.Parse(uiTheme);
 
             var separator = new Border
@@ -94,7 +97,7 @@ namespace WikiPreview.Fluent.Plugin
             var scrollViewer = new ScrollViewer
             {
                 Content = stackPanel,
-                Margin = new Thickness(10.0),
+                Margin = new Thickness(10.0, 0),
                 VerticalScrollBarVisibility = ScrollBarVisibility.Hidden
             };
 

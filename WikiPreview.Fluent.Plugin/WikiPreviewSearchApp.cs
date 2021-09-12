@@ -25,7 +25,7 @@ namespace WikiPreview.Fluent.Plugin
 {
     internal class WikiPreviewSearchApp : ISearchApplication
     {
-        private const string SearchAppName = "WikiPreview";
+        public const string SearchAppName = "WikiPreview";
         public const string WikiSearchTagName = "Wiki";
         private const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
         private readonly SearchApplicationInfo _applicationInfo;
