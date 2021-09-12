@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -7,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Blast.API.Graphics;
 using Blast.Core.Interfaces;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
+using static System.Environment;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -38,6 +40,8 @@ namespace WikiPreview.Fluent.Plugin
 
         private static Control GeneratePreview(string text, IBitmap bitmap)
         {
+            text = Regex.Replace(text, @"\r\n?|\n", NewLine + NewLine);
+
             var wikiDescription = new TextBlock
             {
                 Text = text, Padding = new Thickness(0, 5, 0, 0), TextWrapping = TextWrapping.Wrap,
