@@ -62,8 +62,9 @@ namespace WikiPreview.Fluent.Plugin
 
             var separator = new Border
             {
-                BorderThickness = new Thickness(0.6), Background = new SolidColorBrush(lineColor),
-                Margin = new Thickness(0, 5)
+                BorderThickness = new Thickness(0.6),
+                BorderBrush = new SolidColorBrush(lineColor),
+                Margin = new Thickness(0, 8)
             };
 
             // creates article content.
