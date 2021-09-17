@@ -55,7 +55,7 @@ namespace WikiPreview.Fluent.Plugin
             if (!result) return false;
 
             host = uri.Host[3..];
-            return host.StartsWith("wikipedia.org");
+            return host.StartsWith("wikipedia.org") && uri.Segments.Length > 1;
         }
 
         public ValueTask<Control> CreatePreviewControl(ISearchResult searchResult)
