@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Avalonia;
@@ -17,12 +14,12 @@ using Avalonia.Media.Imaging;
 using Blast.API.Core.Processes;
 using Blast.API.Graphics;
 using Blast.API.Processes;
-using Blast.API.Search;
 using Blast.Core.Interfaces;
 using TextCopy;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static System.Environment;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
+using static WikiPreview.Fluent.Plugin.ResultGenerator;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -77,7 +74,7 @@ namespace WikiPreview.Fluent.Plugin
 
         private static async ValueTask<Control> GenerateElement(string pageName)
         {
-            WikiPreviewSearchResult searchResult = await GetSearchResultForId(pageName);
+            WikiPreviewSearchResult searchResult = await Instance.GenerateOnDemand(pageName, true);
             Control control = GeneratePreview(searchResult);
             return control;
         }
@@ -207,48 +204,6 @@ namespace WikiPreview.Fluent.Plugin
             else if (buttonContent.Contains(GoogleStr))
                 managerInstance.StartNewProcess(GoogleSearchUrl + buttonTag);
             else if (buttonContent.Contains(CopyStr)) Clipboard.SetText(buttonTag);
-        }
-
-        private static async ValueTask<WikiPreviewSearchResult> GetSearchResultForId(string searchObjectId)
-        {
-            if (string.IsNullOrWhiteSpace(searchObjectId))
-                return default;
-
-            string url = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&titles=" +
-                         searchObjectId +
-                         "&explaintext&exintro&pilicense=any&pithumbsize=100&format=json";
-
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
-            var wiki = await httpClient.GetFromJsonAsync<WikiResult.Wiki>(url, SerializerOptions);
-            if (wiki == null) return default;
-
-            Dictionary<string, WikiResult.PageView>.ValueCollection pages = wiki.Query.Pages.Values;
-            if (pages is { Count: 0 }) return default;
-
-            WikiResult.PageView pageView = pages.First();
-            return GenerateSearchResult(pageView, pageView?.Title);
-        }
-
-
-        private static WikiPreviewSearchResult GenerateSearchResult(WikiResult.PageView value,
-            string searchedText)
-        {
-            string resultName = value.Extract;
-            string displayedName = value.Title;
-            double score = displayedName.SearchDistanceScore(searchedText);
-            string pageId = value.PageId.ToString();
-            string wikiUrl = displayedName.Replace(' ', '_');
-
-            return new WikiPreviewSearchResult(resultName)
-            {
-                Url = wikiUrl,
-                DisplayedName = displayedName,
-                SearchedText = searchedText,
-                Score = score,
-                SearchObjectId = pageId,
-                PinUniqueId = pageId
-            };
         }
     }
 }

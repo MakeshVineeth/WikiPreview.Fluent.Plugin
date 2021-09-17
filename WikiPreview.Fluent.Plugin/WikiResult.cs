@@ -2,7 +2,7 @@
 
 namespace WikiPreview.Fluent.Plugin
 {
-    internal static class WikiResult
+    public static class WikiResult
     {
         public class PageView
         {

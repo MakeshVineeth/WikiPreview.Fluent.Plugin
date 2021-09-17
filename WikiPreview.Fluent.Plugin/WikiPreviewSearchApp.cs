@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Blast.API.Core.Processes;
 using Blast.API.Processes;
-using Blast.API.Search;
 using Blast.Core.Interfaces;
 using Blast.Core.Objects;
 using Blast.Core.Results;
@@ -20,6 +15,7 @@ using Dasync.Collections;
 using TextCopy;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static WikiPreview.Fluent.Plugin.WikiResult;
+using static WikiPreview.Fluent.Plugin.ResultGenerator;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -30,7 +26,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
         public static readonly JsonSerializerOptions SerializerOptions = new() { PropertyNameCaseInsensitive = true };
         private readonly SearchApplicationInfo _applicationInfo;
-        private BitmapImageResult _bitmapLogo;
+
 
         public WikiPreviewSearchApp()
         {
@@ -99,9 +95,6 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask LoadSearchApplicationAsync()
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            const string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
-            _bitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
             return ValueTask.CompletedTask;
         }
 
@@ -131,7 +124,7 @@ namespace WikiPreview.Fluent.Plugin
                     _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
                         {
                             WikiPreviewSearchResult wikiPreviewSearchResult =
-                                await GenerateSearchResult(entry.Value, searchedText);
+                                await Instance.GenerateSearchResult(entry.Value, searchedText);
 
                             if (wikiPreviewSearchResult != null)
                                 await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
@@ -152,55 +145,7 @@ namespace WikiPreview.Fluent.Plugin
             if (string.IsNullOrWhiteSpace(pageId))
                 return default;
 
-            string url = "https://en.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&pageids=" +
-                         pageId +
-                         "&explaintext&exintro&pilicense=any&pithumbsize=100&format=json";
-
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
-            var wiki = await httpClient.GetFromJsonAsync<Wiki>(url, SerializerOptions);
-            if (wiki == null) return default;
-
-            Dictionary<string, PageView>.ValueCollection pages = wiki.Query.Pages.Values;
-            if (pages is { Count: 0 }) return default;
-
-            PageView pageView = pages.First();
-            return await GenerateSearchResult(pageView, pageView?.Title);
-        }
-
-        private async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
-            string searchedText)
-        {
-            string resultName = value.Extract;
-            string displayedName = value.Title;
-            double score = displayedName.SearchDistanceScore(searchedText);
-            string pageId = value.PageId.ToString();
-            string wikiUrl = displayedName.Replace(' ', '_');
-            BitmapImageResult bitmapImageResult;
-
-            if (value.Thumbnail != null)
-            {
-                string imgUrl = value.Thumbnail.Source;
-                using var imageClient = new HttpClient();
-                imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
-                Stream stream = await imageClient.GetStreamAsync(imgUrl);
-                bitmapImageResult = new BitmapImageResult(new Bitmap(stream));
-            }
-            else
-            {
-                bitmapImageResult = _bitmapLogo;
-            }
-
-            return new WikiPreviewSearchResult(resultName)
-            {
-                Url = wikiUrl,
-                PreviewImage = bitmapImageResult,
-                DisplayedName = displayedName,
-                SearchedText = searchedText,
-                Score = score,
-                SearchObjectId = pageId,
-                PinUniqueId = pageId
-            };
+            return await Instance.GenerateOnDemand(pageId);
         }
     }
 }
