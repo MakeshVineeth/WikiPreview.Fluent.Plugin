@@ -93,21 +93,25 @@ namespace WikiPreview.Fluent.Plugin
             if (searchResult.PreviewImage is { IsEmpty: false })
             {
                 Bitmap bitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
-                var imageControl = new Border
-                {
-                    Background = new ImageBrush(bitmap)
-                    {
-                        Stretch = Stretch.UniformToFill
-                    },
-                    CornerRadius = new CornerRadius(5.0),
-                    BorderThickness = new Thickness(5.0),
-                    Height = bitmap.Size.Height,
-                    Width = bitmap.Size.Width,
-                    MaxHeight = FixedImageSize,
-                    MaxWidth = FixedImageSize
-                };
 
-                stackPanel.Children.Add(imageControl);
+                if (!bitmap.Dpi.IsDefault & !bitmap.Size.IsDefault)
+                {
+                    var imageControl = new Border
+                    {
+                        Background = new ImageBrush(bitmap)
+                        {
+                            Stretch = Stretch.UniformToFill
+                        },
+                        CornerRadius = new CornerRadius(5.0),
+                        BorderThickness = new Thickness(5.0),
+                        Height = bitmap.Size.Height,
+                        Width = bitmap.Size.Width,
+                        MaxHeight = FixedImageSize,
+                        MaxWidth = FixedImageSize
+                    };
+
+                    stackPanel.Children.Add(imageControl);
+                }
             }
 
             // creates article content.
