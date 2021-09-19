@@ -55,7 +55,7 @@ namespace WikiPreview.Fluent.Plugin
             if (!result) return false;
 
             host = uri.Host[3..];
-            return host.StartsWith("wikipedia.org") && uri.Segments.Length > 1;
+            return host.StartsWith("wikipedia.org") && uri.Segments.Length > 1 && uri.Fragment.Length == 0;
         }
 
         public ValueTask<Control> CreatePreviewControl(ISearchResult searchResult)
@@ -74,7 +74,7 @@ namespace WikiPreview.Fluent.Plugin
 
         private static async ValueTask<Control> GenerateElement(string pageName)
         {
-            WikiPreviewSearchResult searchResult = await Instance.GenerateOnDemand(pageName, true);
+            WikiPreviewSearchResult searchResult = await Instance.GenerateOnDemand(pageName, true, false);
             Control control = GeneratePreview(searchResult);
             return control;
         }

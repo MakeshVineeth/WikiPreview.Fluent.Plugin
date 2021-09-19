@@ -31,7 +31,7 @@ namespace WikiPreview.Fluent.Plugin
         public static ResultGenerator Instance => LazySingleton.Value;
 
         public async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
-            string searchedText)
+            string searchedText, bool loadImage = true)
         {
             string resultName = value.Extract;
             string displayedName = value.Title;
@@ -40,7 +40,7 @@ namespace WikiPreview.Fluent.Plugin
             string wikiUrl = displayedName.Replace(' ', '_');
             BitmapImageResult bitmapImageResult;
 
-            if (value.Thumbnail != null)
+            if (value.Thumbnail != null && loadImage)
             {
                 string imgUrl = value.Thumbnail.Source;
                 using var imageClient = new HttpClient();
@@ -66,7 +66,8 @@ namespace WikiPreview.Fluent.Plugin
             };
         }
 
-        public async ValueTask<WikiPreviewSearchResult> GenerateOnDemand(string searchId, bool isCustomPreview = false)
+        public async ValueTask<WikiPreviewSearchResult> GenerateOnDemand(string searchId, bool isCustomPreview = false,
+            bool loadImage = true)
         {
             if (string.IsNullOrWhiteSpace(searchId))
                 return default;
@@ -86,7 +87,7 @@ namespace WikiPreview.Fluent.Plugin
             if (pages is { Count: 0 }) return default;
 
             PageView pageView = pages.First();
-            return await GenerateSearchResult(pageView, pageView?.Title);
+            return await GenerateSearchResult(pageView, pageView?.Title, loadImage);
         }
     }
 }
