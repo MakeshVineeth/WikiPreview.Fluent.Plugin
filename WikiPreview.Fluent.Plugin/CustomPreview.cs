@@ -75,6 +75,9 @@ namespace WikiPreview.Fluent.Plugin
         private static async ValueTask<Control> GenerateElement(string pageName)
         {
             WikiPreviewSearchResult searchResult = await Instance.GenerateOnDemand(pageName, true, false);
+
+            if (searchResult == null || string.IsNullOrWhiteSpace(searchResult.ResultName)) return default;
+
             Control control = GeneratePreview(searchResult);
             return control;
         }
