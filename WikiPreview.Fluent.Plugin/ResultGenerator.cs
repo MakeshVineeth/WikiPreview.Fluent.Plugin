@@ -28,7 +28,19 @@ namespace WikiPreview.Fluent.Plugin
             _bitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
         }
 
+        private int ImageSize { get; set; }
+
         public static ResultGenerator Instance => LazySingleton.Value;
+
+        public int GetImageSize()
+        {
+            return ImageSize;
+        }
+
+        public void SetImageSize(int size)
+        {
+            ImageSize = size;
+        }
 
         public async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
             string searchedText, bool loadImage = true)

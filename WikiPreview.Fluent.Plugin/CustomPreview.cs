@@ -109,8 +109,8 @@ namespace WikiPreview.Fluent.Plugin
                         BorderThickness = new Thickness(5.0),
                         Height = bitmap.Size.Height,
                         Width = bitmap.Size.Width,
-                        MaxHeight = FixedImageSize,
-                        MaxWidth = FixedImageSize
+                        MaxHeight = Instance.GetImageSize(),
+                        MaxWidth = Instance.GetImageSize()
                     };
 
                     wikiDetails.Children.Add(imageControl);

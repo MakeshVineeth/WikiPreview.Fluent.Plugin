@@ -18,5 +18,11 @@ namespace WikiPreview.Fluent.Plugin
         [Setting(Name = "Load Images", Description = "Whether to retrieve and load images from Wikipedia",
             DefaultValue = true, IconGlyph = "\uEB9F")]
         public bool LoadImages { get; set; }
+
+        [Setting(Name = "Max Image Size",
+            Description = "Sets the max image size shown in the Preview window",
+            DefaultValue = 150, IconGlyph = "\uE91B", MinValue = 80, MaxValue = 300, RequireRestart = true,
+            IsAdvanced = true)]
+        public int ImageSize { get; set; }
     }
 }

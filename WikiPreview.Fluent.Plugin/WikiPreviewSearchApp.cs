@@ -97,6 +97,7 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask LoadSearchApplicationAsync()
         {
+            Instance.SetImageSize(_wikiSettings.ImageSize);
             return ValueTask.CompletedTask;
         }
 
@@ -115,7 +116,7 @@ namespace WikiPreview.Fluent.Plugin
             // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()
             {
-                SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = FixedImageSize,
+                SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = _wikiSettings.ImageSize,
                 ResultsCount = _wikiSettings.MaxResults, LoadImage = _wikiSettings.LoadImages
             };
 
