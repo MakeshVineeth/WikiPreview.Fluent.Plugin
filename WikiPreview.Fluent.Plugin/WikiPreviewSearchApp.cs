@@ -26,7 +26,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string UserAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)";
         public static readonly JsonSerializerOptions SerializerOptions = new() { PropertyNameCaseInsensitive = true };
         private readonly SearchApplicationInfo _applicationInfo;
-
+        private readonly WikiSettings _wikiSettings;
 
         public WikiPreviewSearchApp()
         {
@@ -42,6 +42,8 @@ namespace WikiPreview.Fluent.Plugin
                 DefaultSearchTags = SearchTags,
                 PluginName = "Wikipedia Preview"
             };
+
+            _applicationInfo.SettingsPage = _wikiSettings = new WikiSettings(_applicationInfo);
         }
 
         public SearchApplicationInfo GetApplicationInfo()
@@ -110,8 +112,13 @@ namespace WikiPreview.Fluent.Plugin
                 string.IsNullOrWhiteSpace(searchedText))
                 yield break;
 
+            // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()
-                { SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = FixedImageSize, ResultsCount = 8 };
+            {
+                SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = FixedImageSize,
+                ResultsCount = _wikiSettings.MaxResults, LoadImage = _wikiSettings.LoadImages
+            };
+
             string url = GetFormattedUrl(queryConfiguration);
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);

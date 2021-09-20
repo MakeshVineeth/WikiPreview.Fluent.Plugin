@@ -67,8 +67,15 @@ namespace WikiPreview.Fluent.Plugin
             builder.Append("&gsrlimit=");
             builder.Append(queryConfiguration.ResultsCount);
 
-            builder.Append("&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=");
-            builder.Append(queryConfiguration.ImageSize);
+            if (queryConfiguration.LoadImage)
+            {
+                builder.Append("&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=");
+                builder.Append(queryConfiguration.ImageSize);
+            }
+            else
+            {
+                builder.Append("&prop=extracts&exintro&explaintext&format=json");
+            }
 
             return builder.ToString();
         }
