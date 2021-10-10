@@ -113,6 +113,11 @@ namespace WikiPreview.Fluent.Plugin
                 string.IsNullOrWhiteSpace(searchedText))
                 yield break;
 
+            // Change ImageSize in Singleton Instance whenever Settings has changed.
+            int currentImageSize = Instance.GetImageSize();
+            int userSetSize = _wikiSettings.ImageSize;
+            if (currentImageSize != userSetSize) Instance.SetImageSize(userSetSize);
+
             // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()
             {

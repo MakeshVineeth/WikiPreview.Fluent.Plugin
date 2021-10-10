@@ -21,7 +21,7 @@ namespace WikiPreview.Fluent.Plugin
 
         [Setting(Name = "Max Image Size",
             Description = "Sets the max image size shown in the Preview window",
-            DefaultValue = 150, IconGlyph = "\uE91B", MinValue = 80, MaxValue = 300, RequireRestart = true,
+            DefaultValue = 150, IconGlyph = "\uE91B", MinValue = 80, MaxValue = 300,
             IsAdvanced = true)]
         public int ImageSize { get; set; } = 150;
     }
