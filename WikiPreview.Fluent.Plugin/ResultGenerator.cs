@@ -21,7 +21,7 @@ namespace WikiPreview.Fluent.Plugin
         static ResultGenerator()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            const string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
+            string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
             BitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
         }
 
@@ -40,7 +40,7 @@ namespace WikiPreview.Fluent.Plugin
         {
             string resultName = value.Extract;
             string displayedName = value.Title;
-            double score = displayedName.SearchDistanceScore(searchedText);
+            double score = displayedName.SearchTokens(searchedText);
             string pageId = value.PageId.ToString();
             string wikiUrl = displayedName.Replace(' ', '_');
             BitmapImageResult bitmapImageResult;
@@ -87,12 +87,11 @@ namespace WikiPreview.Fluent.Plugin
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
             var wiki = await httpClient.GetFromJsonAsync<Wiki>(url, SerializerOptions);
-            if (wiki == null) return default;
 
-            Dictionary<string, PageView>.ValueCollection pages = wiki.Query.Pages.Values;
+            Dictionary<string, PageView>.ValueCollection pages = wiki?.Query?.Pages?.Values;
             if (pages is { Count: 0 }) return default;
 
-            PageView pageView = pages.First();
+            PageView pageView = pages?.First();
             return await GenerateSearchResult(pageView, pageView?.Title, loadImage);
         }
     }
