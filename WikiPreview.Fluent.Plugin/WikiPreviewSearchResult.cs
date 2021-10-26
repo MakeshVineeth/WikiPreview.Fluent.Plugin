@@ -39,7 +39,7 @@ namespace WikiPreview.Fluent.Plugin
             }
         };
 
-        private readonly CustomPreview _customPreview = new();
+        private readonly WikiResultPreviewControlBuilder _wikiResultPreviewControlBuilder = new();
 
         public WikiPreviewSearchResult(string resultName)
         {
@@ -52,7 +52,7 @@ namespace WikiPreview.Fluent.Plugin
                 resultName = "Description not available for this Search Result.";
 
             ResultName = resultName;
-            ResultPreviewControlBuilder = _customPreview;
+            ResultPreviewControlBuilder = _wikiResultPreviewControlBuilder;
         }
 
         public string Url { get; set; }

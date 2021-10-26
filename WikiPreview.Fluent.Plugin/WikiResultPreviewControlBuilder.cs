@@ -23,13 +23,13 @@ using static WikiPreview.Fluent.Plugin.ResultGenerator;
 
 namespace WikiPreview.Fluent.Plugin
 {
-    public class CustomPreview : IResultPreviewControlBuilder
+    public class WikiResultPreviewControlBuilder : IResultPreviewControlBuilder
     {
         private const string GoogleStr = "Search Google";
         private const string WikipediaStr = "Wikipedia";
         private const string CopyStr = "Copy Text";
 
-        public CustomPreview()
+        public WikiResultPreviewControlBuilder()
         {
             PreviewBuilderDescriptor = new PreviewBuilderDescriptor
             {
