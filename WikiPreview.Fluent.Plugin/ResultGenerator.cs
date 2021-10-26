@@ -44,10 +44,15 @@ namespace WikiPreview.Fluent.Plugin
         public static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
             string searchedText, bool loadImage = true)
         {
+            string displayedName = value?.Title;
+            string pageId = value?.PageId.ToString();
+            if (string.IsNullOrWhiteSpace(displayedName) || string.IsNullOrWhiteSpace(pageId)) return null;
+
             string resultName = value.Extract;
-            string displayedName = value.Title;
+            if (string.IsNullOrWhiteSpace(resultName))
+                resultName = "Description not available for this Search Result.";
+
             double score = displayedName.SearchTokens(searchedText);
-            string pageId = value.PageId.ToString();
             string wikiUrl = displayedName.Replace(' ', '_');
             BitmapImageResult bitmapImageResult;
 

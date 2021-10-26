@@ -47,10 +47,6 @@ namespace WikiPreview.Fluent.Plugin
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
             ResultType = WikiSearchTagName;
-
-            if (string.IsNullOrWhiteSpace(resultName))
-                resultName = "Description not available for this Search Result.";
-
             ResultName = resultName;
             ResultPreviewControlBuilder = _wikiResultPreviewControlBuilder;
         }
