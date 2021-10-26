@@ -97,7 +97,7 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask LoadSearchApplicationAsync()
         {
-            SetWikiImageSize(_wikiSettings.ImageSize);
+            SetImageSizePrefs(_wikiSettings.ImageSize);
             return ValueTask.CompletedTask;
         }
 
@@ -114,9 +114,9 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
 
             // Change ImageSize in Singleton Instance whenever User Settings has been changed.
-            int currentImageSize = GetWikiImageSize();
+            int currentImageSize = GetImageSizePrefs();
             int userSetSize = _wikiSettings.ImageSize;
-            if (currentImageSize != userSetSize) SetWikiImageSize(userSetSize);
+            if (currentImageSize != userSetSize) SetImageSizePrefs(userSetSize);
 
             // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()

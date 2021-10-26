@@ -23,6 +23,9 @@ using static WikiPreview.Fluent.Plugin.ResultGenerator;
 
 namespace WikiPreview.Fluent.Plugin
 {
+    /// <summary>
+    ///     Builds a custom preview for Wiki Results.
+    /// </summary>
     public class WikiResultPreviewControlBuilder : IResultPreviewControlBuilder
     {
         private const string GoogleStr = "Search Google";
@@ -108,8 +111,8 @@ namespace WikiPreview.Fluent.Plugin
                         BorderThickness = new Thickness(5.0),
                         Height = bitmap.Size.Height,
                         Width = bitmap.Size.Width,
-                        MaxHeight = GetWikiImageSize(),
-                        MaxWidth = GetWikiImageSize()
+                        MaxHeight = GetImageSizePrefs(),
+                        MaxWidth = GetImageSizePrefs()
                     };
 
                     wikiDetails.Children.Add(imageControl);

@@ -13,26 +13,32 @@ using static WikiPreview.Fluent.Plugin.WikiResult;
 
 namespace WikiPreview.Fluent.Plugin
 {
+    /// <summary>
+    ///     A static class that stores the common methods to generate search results.
+    ///     Also stores and initializes WikipediaLogo which will be used as placeholder for Wiki Results with no images.
+    ///     Stores the Image Size (set in FS Plugin Settings) and is used across multiple places.
+    /// </summary>
     public static class ResultGenerator
     {
-        private static readonly BitmapImageResult BitmapLogo;
-        private static int _imageSize;
+        private static readonly BitmapImageResult WikipediaLogo;
+        private static int _imageSizePrefs;
 
         static ResultGenerator()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
-            BitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
+            WikipediaLogo =
+                new BitmapImageResult(
+                    assembly.GetManifestResourceStream("WikiPreview.Fluent.Plugin.Wikipedia-logo.png"));
         }
 
-        public static int GetWikiImageSize()
+        public static int GetImageSizePrefs()
         {
-            return _imageSize;
+            return _imageSizePrefs;
         }
 
-        public static void SetWikiImageSize(int size)
+        public static void SetImageSizePrefs(int size)
         {
-            _imageSize = size;
+            _imageSizePrefs = size;
         }
 
         public static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
@@ -51,12 +57,14 @@ namespace WikiPreview.Fluent.Plugin
                 using var imageClient = new HttpClient();
                 imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
                 Stream stream = await imageClient.GetStreamAsync(imgUrl);
-                var bitmap = new Bitmap(stream);
+#pragma warning disable CA1416
+                var bitmap = new Bitmap(stream); // Wiki Images are not working with AvaloniaBitmap as of now.
+#pragma warning restore CA1416
                 bitmapImageResult = new BitmapImageResult(bitmap);
             }
             else
             {
-                bitmapImageResult = BitmapLogo;
+                bitmapImageResult = WikipediaLogo;
             }
 
             return new WikiPreviewSearchResult(resultName)
