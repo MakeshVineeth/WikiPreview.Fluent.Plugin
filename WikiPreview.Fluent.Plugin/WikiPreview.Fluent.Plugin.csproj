@@ -7,12 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-        <PackageReference Include="Blast.API" Version="0.9.89.9990-beta" />
+        <PackageReference Include="AsyncEnumerator" Version="4.0.2"/>
+        <PackageReference Include="Blast.API" Version="0.9.89.9990-beta"/>
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Wikipedia-logo.png" />
+        <EmbeddedResource Include="Wikipedia-logo.png"/>
     </ItemGroup>
 
 </Project>

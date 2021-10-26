@@ -25,12 +25,12 @@ namespace WikiPreview.Fluent.Plugin
             BitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
         }
 
-        public static int GetImageSize()
+        public static int GetWikiImageSize()
         {
             return _imageSize;
         }
 
-        public static void SetImageSize(int size)
+        public static void SetWikiImageSize(int size)
         {
             _imageSize = size;
         }

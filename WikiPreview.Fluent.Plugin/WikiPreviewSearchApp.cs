@@ -97,7 +97,7 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask LoadSearchApplicationAsync()
         {
-            SetImageSize(_wikiSettings.ImageSize);
+            SetWikiImageSize(_wikiSettings.ImageSize);
             return ValueTask.CompletedTask;
         }
 
@@ -113,15 +113,15 @@ namespace WikiPreview.Fluent.Plugin
                 string.IsNullOrWhiteSpace(searchedText))
                 yield break;
 
-            // Change ImageSize in Singleton Instance whenever Settings has changed.
-            int currentImageSize = GetImageSize();
+            // Change ImageSize in Singleton Instance whenever User Settings has been changed.
+            int currentImageSize = GetWikiImageSize();
             int userSetSize = _wikiSettings.ImageSize;
-            if (currentImageSize != userSetSize) SetImageSize(userSetSize);
+            if (currentImageSize != userSetSize) SetWikiImageSize(userSetSize);
 
             // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()
             {
-                SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = _wikiSettings.ImageSize,
+                SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = userSetSize,
                 ResultsCount = _wikiSettings.MaxResults, LoadImage = _wikiSettings.LoadImages
             };
 

@@ -41,10 +41,9 @@ namespace WikiPreview.Fluent.Plugin
 
         public bool CanBuildPreviewForResult(ISearchResult searchResult)
         {
-            if (string.IsNullOrWhiteSpace(searchResult.SearchApp)) return false;
-
-            if (searchResult.SearchApp.Equals(SearchAppName,
-                StringComparison.OrdinalIgnoreCase)) return true;
+            string appName = searchResult?.SearchApp;
+            if (!string.Equals(appName, SearchAppName,
+                StringComparison.OrdinalIgnoreCase)) return false;
 
             string host = searchResult.Context;
             if (string.IsNullOrWhiteSpace(host)) return false;
@@ -109,8 +108,8 @@ namespace WikiPreview.Fluent.Plugin
                         BorderThickness = new Thickness(5.0),
                         Height = bitmap.Size.Height,
                         Width = bitmap.Size.Width,
-                        MaxHeight = GetImageSize(),
-                        MaxWidth = GetImageSize()
+                        MaxHeight = GetWikiImageSize(),
+                        MaxWidth = GetWikiImageSize()
                     };
 
                     wikiDetails.Children.Add(imageControl);
