@@ -97,7 +97,7 @@ namespace WikiPreview.Fluent.Plugin
 
         public ValueTask LoadSearchApplicationAsync()
         {
-            Instance.SetImageSize(_wikiSettings.ImageSize);
+            SetImageSize(_wikiSettings.ImageSize);
             return ValueTask.CompletedTask;
         }
 
@@ -114,9 +114,9 @@ namespace WikiPreview.Fluent.Plugin
                 yield break;
 
             // Change ImageSize in Singleton Instance whenever Settings has changed.
-            int currentImageSize = Instance.GetImageSize();
+            int currentImageSize = GetImageSize();
             int userSetSize = _wikiSettings.ImageSize;
-            if (currentImageSize != userSetSize) Instance.SetImageSize(userSetSize);
+            if (currentImageSize != userSetSize) SetImageSize(userSetSize);
 
             // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()
@@ -137,7 +137,7 @@ namespace WikiPreview.Fluent.Plugin
                     _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
                         {
                             WikiPreviewSearchResult wikiPreviewSearchResult =
-                                await Instance.GenerateSearchResult(entry.Value, searchedText);
+                                await GenerateSearchResult(entry.Value, searchedText);
 
                             if (wikiPreviewSearchResult != null)
                                 await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
@@ -158,7 +158,7 @@ namespace WikiPreview.Fluent.Plugin
             if (string.IsNullOrWhiteSpace(pageId))
                 return default;
 
-            return await Instance.GenerateOnDemand(pageId);
+            return await GenerateOnDemand(pageId);
         }
     }
 }

@@ -74,7 +74,7 @@ namespace WikiPreview.Fluent.Plugin
 
         private static async ValueTask<Control> GenerateElement(string pageName)
         {
-            WikiPreviewSearchResult searchResult = await Instance.GenerateOnDemand(pageName, true, false);
+            WikiPreviewSearchResult searchResult = await GenerateOnDemand(pageName, true, false);
 
             if (searchResult == null || string.IsNullOrWhiteSpace(searchResult.ResultName)) return default;
 
@@ -109,8 +109,8 @@ namespace WikiPreview.Fluent.Plugin
                         BorderThickness = new Thickness(5.0),
                         Height = bitmap.Size.Height,
                         Width = bitmap.Size.Width,
-                        MaxHeight = Instance.GetImageSize(),
-                        MaxWidth = Instance.GetImageSize()
+                        MaxHeight = GetImageSize(),
+                        MaxWidth = GetImageSize()
                     };
 
                     wikiDetails.Children.Add(imageControl);

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -14,35 +13,29 @@ using static WikiPreview.Fluent.Plugin.WikiResult;
 
 namespace WikiPreview.Fluent.Plugin
 {
-    public sealed class ResultGenerator
+    public static class ResultGenerator
     {
-        private static readonly Lazy<ResultGenerator> LazySingleton =
-            new(() => new ResultGenerator());
+        private static readonly BitmapImageResult BitmapLogo;
+        private static int _imageSize;
 
-        private readonly BitmapImageResult _bitmapLogo;
-
-        private ResultGenerator()
+        static ResultGenerator()
         {
             var assembly = Assembly.GetExecutingAssembly();
             const string resourceName = "WikiPreview.Fluent.Plugin.Wikipedia-logo.png";
-            _bitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
+            BitmapLogo = new BitmapImageResult(assembly.GetManifestResourceStream(resourceName));
         }
 
-        private int ImageSize { get; set; }
-
-        public static ResultGenerator Instance => LazySingleton.Value;
-
-        public int GetImageSize()
+        public static int GetImageSize()
         {
-            return ImageSize;
+            return _imageSize;
         }
 
-        public void SetImageSize(int size)
+        public static void SetImageSize(int size)
         {
-            ImageSize = size;
+            _imageSize = size;
         }
 
-        public async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
+        public static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
             string searchedText, bool loadImage = true)
         {
             string resultName = value.Extract;
@@ -63,7 +56,7 @@ namespace WikiPreview.Fluent.Plugin
             }
             else
             {
-                bitmapImageResult = _bitmapLogo;
+                bitmapImageResult = BitmapLogo;
             }
 
             return new WikiPreviewSearchResult(resultName)
@@ -78,7 +71,8 @@ namespace WikiPreview.Fluent.Plugin
             };
         }
 
-        public async ValueTask<WikiPreviewSearchResult> GenerateOnDemand(string searchId, bool isCustomPreview = false,
+        public static async ValueTask<WikiPreviewSearchResult> GenerateOnDemand(string searchId,
+            bool isCustomPreview = false,
             bool loadImage = true)
         {
             if (string.IsNullOrWhiteSpace(searchId))
