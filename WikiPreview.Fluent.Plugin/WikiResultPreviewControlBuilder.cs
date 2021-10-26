@@ -45,10 +45,10 @@ namespace WikiPreview.Fluent.Plugin
         public bool CanBuildPreviewForResult(ISearchResult searchResult)
         {
             string appName = searchResult?.SearchApp;
-            if (!string.Equals(appName, SearchAppName,
-                StringComparison.OrdinalIgnoreCase)) return false;
+            if (string.Equals(appName, SearchAppName,
+                StringComparison.OrdinalIgnoreCase)) return true;
 
-            string host = searchResult.Context;
+            string host = searchResult?.Context;
             if (string.IsNullOrWhiteSpace(host)) return false;
 
             bool result = Uri.TryCreate(host, UriKind.Absolute, out Uri uri)
