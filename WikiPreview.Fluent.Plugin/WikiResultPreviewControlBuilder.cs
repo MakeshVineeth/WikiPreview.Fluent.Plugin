@@ -78,7 +78,7 @@ namespace WikiPreview.Fluent.Plugin
         {
             WikiPreviewSearchResult searchResult = await GenerateOnDemand(pageName, true, false);
 
-            if (searchResult == null || string.IsNullOrWhiteSpace(searchResult.ResultName)) return default;
+            if (string.IsNullOrWhiteSpace(searchResult?.ResultName)) return default;
 
             Control control = GeneratePreview(searchResult);
             return control;
@@ -97,20 +97,20 @@ namespace WikiPreview.Fluent.Plugin
             // creates image control.
             if (searchResult.PreviewImage is { IsEmpty: false })
             {
-                Bitmap bitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
+                Bitmap wikiBitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
 
-                if (!bitmap.Dpi.IsDefault & !bitmap.Size.IsDefault)
+                if (wikiBitmap is { Size: { IsDefault: false } })
                 {
                     var imageControl = new Border
                     {
-                        Background = new ImageBrush(bitmap)
+                        Background = new ImageBrush(wikiBitmap)
                         {
                             Stretch = Stretch.UniformToFill
                         },
                         CornerRadius = new CornerRadius(5.0),
                         BorderThickness = new Thickness(5.0),
-                        Height = bitmap.Size.Height,
-                        Width = bitmap.Size.Width,
+                        Height = wikiBitmap.Size.Height,
+                        Width = wikiBitmap.Size.Width,
                         MaxHeight = GetImageSizePrefs(),
                         MaxWidth = GetImageSizePrefs()
                     };
@@ -149,9 +149,9 @@ namespace WikiPreview.Fluent.Plugin
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.Children.Add(scrollViewer);
 
-            Button openWiki = CreateButton(WikipediaStr, searchResult.Url);
-            Button searchGoogle = CreateButton(GoogleStr, searchResult.DisplayedName);
-            Button copyContents = CreateButton(CopyStr, text);
+            Button openWiki = CreateOperationButton(WikipediaStr, searchResult.Url);
+            Button searchGoogle = CreateOperationButton(GoogleStr, searchResult.DisplayedName);
+            Button copyContents = CreateOperationButton(CopyStr, text);
 
             var uniformGrid = new UniformGrid
             {
@@ -182,7 +182,7 @@ namespace WikiPreview.Fluent.Plugin
                 scrollViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         }
 
-        private static Button CreateButton(string text, string tag)
+        private static Button CreateOperationButton(string text, string tag)
         {
             var button = new Button
             {
@@ -194,19 +194,17 @@ namespace WikiPreview.Fluent.Plugin
                 [!TemplatedControl.BackgroundProperty] = new DynamicResourceExtension("TextControlBackground")
             };
 
-            button.Click += ButtonOnClick;
+            button.Click += ExecuteOperations;
             return button;
         }
 
-        private static void ButtonOnClick(object sender, RoutedEventArgs e)
+        private static void ExecuteOperations(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             string buttonContent = button?.Content.ToString();
-
             if (string.IsNullOrWhiteSpace(buttonContent)) return;
 
             string buttonTag = button.Tag?.ToString();
-
             if (string.IsNullOrWhiteSpace(buttonTag)) return;
 
             IProcessManager managerInstance = ProcessUtils.GetManagerInstance();

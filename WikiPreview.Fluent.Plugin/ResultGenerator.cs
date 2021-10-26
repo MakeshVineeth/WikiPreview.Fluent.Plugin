@@ -46,7 +46,7 @@ namespace WikiPreview.Fluent.Plugin
         {
             string displayedName = value?.Title;
             string pageId = value?.PageId.ToString();
-            if (string.IsNullOrWhiteSpace(displayedName) || string.IsNullOrWhiteSpace(pageId)) return null;
+            if (string.IsNullOrWhiteSpace(pageId) || string.IsNullOrWhiteSpace(displayedName)) return null;
 
             string resultName = value.Extract;
             if (string.IsNullOrWhiteSpace(resultName))
@@ -56,7 +56,7 @@ namespace WikiPreview.Fluent.Plugin
             string wikiUrl = displayedName.Replace(' ', '_');
             BitmapImageResult bitmapImageResult;
 
-            if (value.Thumbnail != null && loadImage)
+            if (loadImage && value.Thumbnail != null)
             {
                 string imgUrl = value.Thumbnail.Source;
                 using var imageClient = new HttpClient();
