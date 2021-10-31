@@ -69,12 +69,12 @@ namespace WikiPreview.Fluent.Plugin
             }
 
             string pageName = searchResult.Context.Split('/').Last();
-            return GenerateElement(pageName);
+            return GenerateFromTitle(pageName);
         }
 
         public PreviewBuilderDescriptor PreviewBuilderDescriptor { get; }
 
-        private static async ValueTask<Control> GenerateElement(string pageName)
+        private static async ValueTask<Control> GenerateFromTitle(string pageName)
         {
             WikiPreviewSearchResult searchResult = await GenerateOnDemand(pageName, true);
 
