@@ -59,13 +59,26 @@ namespace WikiPreview.Fluent.Plugin
             if (loadImage && value.Thumbnail != null)
             {
                 string imgUrl = value.Thumbnail.Source;
+
                 using var imageClient = new HttpClient();
                 imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
-                Stream stream = await imageClient.GetStreamAsync(imgUrl);
+
+                using HttpResponseMessage response =
+                    await imageClient.GetAsync(imgUrl, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await using Stream stream = await response.Content.ReadAsStreamAsync();
 #pragma warning disable CA1416
-                var bitmap = new Bitmap(stream); // Wiki Images are not working with AvaloniaBitmap as of now.
+                    var bitmap =
+                        new Bitmap(stream); // Wiki Images are not working with AvaloniaBitmap as of now.
 #pragma warning restore CA1416
-                bitmapImageResult = new BitmapImageResult(bitmap);
+                    bitmapImageResult = new BitmapImageResult(bitmap);
+                }
+                else
+                {
+                    bitmapImageResult = WikipediaLogo;
+                }
             }
             else
             {
