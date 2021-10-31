@@ -68,7 +68,8 @@ namespace WikiPreview.Fluent.Plugin
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await using Stream stream = await response.Content.ReadAsStreamAsync();
+                    await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
 #pragma warning disable CA1416
                     var bitmap =
                         new Bitmap(stream); // Wiki Images are not working with AvaloniaBitmap as of now.
