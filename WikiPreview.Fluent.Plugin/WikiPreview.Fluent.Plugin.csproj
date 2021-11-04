@@ -1,18 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0-windows10.0.19041</TargetFramework>
-    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-      None
-    </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-    <Platforms>AnyCPU;x64</Platforms>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Platforms>AnyCPU;x64</Platforms>
+        <AssemblyVersion>1.3.0.0</AssemblyVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-    <PackageReference Include="Blast.API" Version="0.9.76.5-beta" />
-    <PackageReference Include="TextCopy" Version="1.5.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AsyncEnumerator" Version="4.0.2"/>
+        <PackageReference Include="Blast.API" Version="0.9.89.9990-beta"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Wikipedia-logo.png"/>
+    </ItemGroup>
 
 </Project>

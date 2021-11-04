@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text;
+using Avalonia.Input;
 using Blast.API.Search.SearchOperations;
 using Blast.Core.Interfaces;
 using Blast.Core.Results;
@@ -15,6 +16,7 @@ namespace WikiPreview.Fluent.Plugin
         public const string GoogleSearchUrl = "https://www.google.com/search?q=";
         public const string SearchResultIcon = "\uEDE4";
         public const string TagDescription = "Search in Wikipedia";
+        public const string CopyContentsStr = "Copy Contents";
 
         public static readonly ObservableCollection<ISearchOperation> SupportedOperationCollections
             = new()
@@ -22,7 +24,9 @@ namespace WikiPreview.Fluent.Plugin
                 OpenWiki,
                 OpenWikiWand,
                 OpenGoogle,
-                new CopySearchOperation("Copy URL") {Description = "Copies the Wikipedia Page URL to Clipboard."}
+                new CopySearchOperation("Copy URL") { Description = "Copies the Wikipedia Page URL to Clipboard." },
+                new CopySearchOperation("Copy Contents")
+                    { Description = "Copy the Contents of the Result.", KeyGesture = new KeyGesture(Key.None) }
             };
 
         public static readonly ObservableCollection<SearchTag> SearchTags = new()
@@ -35,12 +39,16 @@ namespace WikiPreview.Fluent.Plugin
             }
         };
 
-        public WikiPreviewSearchResult()
+        private readonly WikiResultPreviewControlBuilder _wikiResultPreviewControlBuilder = new();
+
+        public WikiPreviewSearchResult(string resultName)
         {
             Tags = SearchTags;
             SupportedOperations = SupportedOperationCollections;
             IconGlyph = SearchResultIcon;
             ResultType = WikiSearchTagName;
+            ResultName = resultName;
+            ResultPreviewControlBuilder = _wikiResultPreviewControlBuilder;
         }
 
         public string Url { get; set; }
@@ -58,14 +66,22 @@ namespace WikiPreview.Fluent.Plugin
             builder.Append("&gsrlimit=");
             builder.Append(queryConfiguration.ResultsCount);
 
-            builder.Append("&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=");
-            builder.Append(queryConfiguration.ImageSize);
+            if (queryConfiguration.LoadImage)
+            {
+                builder.Append("&prop=pageimages|extracts&exintro&explaintext&pilicense=any&format=json&pithumbsize=");
+                builder.Append(queryConfiguration.ImageSize);
+            }
+            else
+            {
+                builder.Append("&prop=extracts&exintro&explaintext&format=json");
+            }
 
             return builder.ToString();
         }
 
         protected override void OnSelectedSearchResultChanged()
         {
+            // Empty
         }
     }
 }

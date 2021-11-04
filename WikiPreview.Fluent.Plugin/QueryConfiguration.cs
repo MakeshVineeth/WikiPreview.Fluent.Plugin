@@ -6,5 +6,6 @@
         public int WikiNameSpace { get; set; }
         public int ResultsCount { get; set; }
         public int ImageSize { get; set; }
+        public bool LoadImage { get; set; }
     }
 }
