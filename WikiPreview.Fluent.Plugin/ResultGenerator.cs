@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -54,7 +53,7 @@ namespace WikiPreview.Fluent.Plugin
 
             double score = displayedName.SearchTokens(searchedText);
             string wikiUrl = displayedName.Replace(' ', '_');
-            BitmapImageResult bitmapImageResult;
+            BitmapImageResult bitmapImageResult = null;
 
             if (loadImage && value.Thumbnail != null)
             {
@@ -63,28 +62,18 @@ namespace WikiPreview.Fluent.Plugin
                 using var imageClient = new HttpClient();
                 imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
 
-                using HttpResponseMessage response =
-                    await imageClient.GetAsync(imgUrl, HttpCompletionOption.ResponseHeadersRead);
-
-                if (response.IsSuccessStatusCode)
+                await imageClient.GetStreamAsync(imgUrl).ContinueWith(task =>
                 {
-                    await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-
-#pragma warning disable CA1416
+                    if (!task.IsCompletedSuccessfully) return;
                     var bitmap =
-                        new Bitmap(stream); // Wiki Images are not working with AvaloniaBitmap as of now.
-#pragma warning restore CA1416
-                    bitmapImageResult = new BitmapImageResult(bitmap);
-                }
-                else
-                {
-                    bitmapImageResult = WikipediaLogo;
-                }
+                        new Bitmap(task.Result); // Wiki Images are not working with AvaloniaBitmap as of now.
+
+                    if (!bitmap.Size.IsEmpty)
+                        bitmapImageResult = new BitmapImageResult(bitmap);
+                });
             }
-            else
-            {
-                bitmapImageResult = WikipediaLogo;
-            }
+
+            bitmapImageResult ??= WikipediaLogo;
 
             return new WikiPreviewSearchResult(resultName)
             {
