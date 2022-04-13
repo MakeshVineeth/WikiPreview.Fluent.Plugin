@@ -99,7 +99,7 @@ namespace WikiPreview.Fluent.Plugin
             {
                 Bitmap wikiBitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
 
-                if (wikiBitmap is { Size: { IsDefault: false } })
+                if (wikiBitmap is { Size.IsDefault: false })
                 {
                     var imageControl = new Border
                     {
