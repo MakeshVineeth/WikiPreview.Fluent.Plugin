@@ -8,9 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-        <PackageReference Include="Avalonia" Version="0.10.999-cibuild0019861-beta" />
-        <PackageReference Include="Avalonia.Desktop" Version="0.10.999-cibuild0019861-beta" />
-        <PackageReference Include="Blast.API" Version="0.9.90.9999-beta" />
+        <PackageReference Include="Blast.API" Version="0.9.91.52-beta" />
     </ItemGroup>
 
     <ItemGroup>
