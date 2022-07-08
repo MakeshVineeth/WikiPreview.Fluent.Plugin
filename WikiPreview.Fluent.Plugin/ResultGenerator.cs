@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Blast.API.Core.UI;
 using Blast.API.Search;
 using Blast.Core.Results;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
@@ -40,51 +43,87 @@ namespace WikiPreview.Fluent.Plugin
             _imageSizePrefs = size;
         }
 
-        public static async ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
+        public static ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
             string searchedText, bool loadImage = true)
         {
             string displayedName = value?.Title;
             string pageId = value?.PageId.ToString();
-            if (string.IsNullOrWhiteSpace(pageId) || string.IsNullOrWhiteSpace(displayedName)) return null;
 
-            string resultName = value.Extract;
+            if (string.IsNullOrWhiteSpace(pageId) || string.IsNullOrWhiteSpace(displayedName))
+            {
+                return new ValueTask<WikiPreviewSearchResult>();
+            }
+
+            string resultName = value.Extract?.Trim();
             if (string.IsNullOrWhiteSpace(resultName))
                 resultName = "Description not available for this Search Result.";
+            else
+                resultName = Regex.Replace(resultName, @"[\r\n]+", "\n");
 
             double score = displayedName.SearchTokens(searchedText);
             string wikiUrl = displayedName.Replace(' ', '_');
-            BitmapImageResult bitmapImageResult = null;
+            string imgUrl = string.Empty;
 
             if (loadImage && value.Thumbnail != null)
             {
-                string imgUrl = value.Thumbnail.Source;
-
-                using var imageClient = new HttpClient();
-                imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
-
-                await imageClient.GetStreamAsync(imgUrl).ContinueWith(task =>
-                {
-                    if (!task.IsCompletedSuccessfully) return;
-                    var bitmap =
-                        new Bitmap(task.Result); // Wiki Images are not working with AvaloniaBitmap as of now.
-
-                    if (!bitmap.Size.IsEmpty)
-                        bitmapImageResult = new BitmapImageResult(bitmap);
-                });
+                imgUrl = value.Thumbnail.Source;
             }
 
-            bitmapImageResult ??= WikipediaLogo;
-
-            return new WikiPreviewSearchResult(resultName)
+            WikiPreviewSearchResult searchResult = new(resultName)
             {
                 Url = wikiUrl,
-                PreviewImage = bitmapImageResult,
                 DisplayedName = displayedName,
                 SearchedText = searchedText,
                 Score = score,
                 SearchObjectId = pageId,
-                PinUniqueId = pageId
+                PinUniqueId = pageId,
+                UseIconGlyph = false,
+                PreviewImage = WikipediaLogo,
+                ImageUrl = imgUrl
             };
+
+            // Set Additional Info
+            using var reader = new StringReader(resultName);
+            string first_line = reader.ReadLine();
+            if (!string.IsNullOrWhiteSpace(first_line))
+            {
+                searchResult.AdditionalInformation = first_line;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                BitmapImageResult bitmapImageResult = null;
+
+                if (!string.IsNullOrWhiteSpace(imgUrl))
+                {
+                    using var imageClient = new HttpClient();
+                    imageClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgentString);
+
+                    await imageClient.GetStreamAsync(imgUrl).ContinueWith(task =>
+                    {
+                        if (!task.IsCompletedSuccessfully) return;
+                        var bitmap =
+                            new Bitmap(task.Result); // Wiki Images are not working with AvaloniaBitmap as of now.
+
+                        if (!bitmap.Size.IsEmpty)
+                            bitmapImageResult = new BitmapImageResult(bitmap);
+                    });
+                }
+
+                void UpdatePreviewImage()
+                {
+                    searchResult.PreviewImage = bitmapImageResult;
+                    searchResult.ResultPreviewControlBuilder = null;
+                }
+
+                if (bitmapImageResult != null && !bitmapImageResult.IsEmpty)
+                {
+                    UiUtilities.UiDispatcher.Post(UpdatePreviewImage);
+                }
+            });
+
+            return new ValueTask<WikiPreviewSearchResult>(searchResult);
         }
 
         public static async ValueTask<WikiPreviewSearchResult> GenerateOnDemand(string searchId,

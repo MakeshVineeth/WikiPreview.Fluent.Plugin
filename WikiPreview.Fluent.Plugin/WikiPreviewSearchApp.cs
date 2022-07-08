@@ -38,9 +38,10 @@ namespace WikiPreview.Fluent.Plugin
                 IsProcessSearchOffline = false,
                 SearchTagOnly = true,
                 ApplicationIconGlyph = SearchResultIcon,
-                SearchAllTime = ApplicationSearchTime.Fast,
+                SearchAllTime = ApplicationSearchTime.Slow,
                 DefaultSearchTags = SearchTags,
-                PluginName = "Wikipedia Preview"
+                PluginName = "Wikipedia Preview",
+                SearchTagName = WikiSearchTagName
             };
 
             _applicationInfo.SettingsPage = _wikiSettings = new WikiSettings(_applicationInfo);
@@ -121,8 +122,11 @@ namespace WikiPreview.Fluent.Plugin
             // Wiki Namespace set to 0 for searching in main articles only.
             QueryConfiguration queryConfiguration = new()
             {
-                SearchTerm = searchedText, WikiNameSpace = 0, ImageSize = userSetSize,
-                ResultsCount = _wikiSettings.MaxResults, LoadImage = _wikiSettings.LoadImages
+                SearchTerm = searchedText,
+                WikiNameSpace = 0,
+                ImageSize = userSetSize,
+                ResultsCount = _wikiSettings.MaxResults,
+                LoadImage = _wikiSettings.LoadImages
             };
 
             string url = GetFormattedUrl(queryConfiguration);
@@ -139,7 +143,7 @@ namespace WikiPreview.Fluent.Plugin
                             WikiPreviewSearchResult wikiPreviewSearchResult =
                                 await GenerateSearchResult(entry.Value, searchedText);
 
-                            if (wikiPreviewSearchResult != null)
+                            if (!string.IsNullOrWhiteSpace(wikiPreviewSearchResult?.DisplayedName))
                                 await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
                                     .ConfigureAwait(false);
                         }, cancellationToken)

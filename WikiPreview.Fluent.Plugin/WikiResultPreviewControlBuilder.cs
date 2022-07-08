@@ -123,7 +123,9 @@ namespace WikiPreview.Fluent.Plugin
             // creates article content.
             var wikiDescription = new TextBlock
             {
-                Text = text, Padding = new Thickness(5, 10, 5, 0), TextWrapping = TextWrapping.Wrap,
+                Text = text,
+                Padding = new Thickness(5, 10, 5, 0),
+                TextWrapping = TextWrapping.Wrap,
                 TextTrimming = TextTrimming.WordEllipsis
             };
 
