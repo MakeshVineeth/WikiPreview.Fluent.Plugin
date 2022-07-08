@@ -114,7 +114,6 @@ namespace WikiPreview.Fluent.Plugin
                 void UpdatePreviewImage()
                 {
                     searchResult.PreviewImage = bitmapImageResult;
-                    searchResult.ResultPreviewControlBuilder = null;
                 }
 
                 if (bitmapImageResult != null && !bitmapImageResult.IsEmpty)
