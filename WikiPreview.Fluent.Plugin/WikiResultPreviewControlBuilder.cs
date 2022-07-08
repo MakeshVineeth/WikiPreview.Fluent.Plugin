@@ -20,6 +20,7 @@ using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static System.Environment;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
 using static WikiPreview.Fluent.Plugin.ResultGenerator;
+using Avalonia.Data;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -97,22 +98,24 @@ namespace WikiPreview.Fluent.Plugin
             // creates image control.
             if (searchResult.PreviewImage is { IsEmpty: false })
             {
-                Bitmap wikiBitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
+                Bitmap wikiBitmap = searchResult.PreviewImage.AvaloniaBitmap;
 
                 if (wikiBitmap is { Size.IsDefault: false })
                 {
                     var imageControl = new Border
                     {
-                        Background = new ImageBrush(wikiBitmap)
+                        Background = new ImageBrush()
                         {
-                            Stretch = Stretch.UniformToFill
+                            Stretch = Stretch.UniformToFill,
+                            Source = wikiBitmap
                         },
                         CornerRadius = new CornerRadius(5.0),
                         BorderThickness = new Thickness(5.0),
                         Height = wikiBitmap.Size.Height,
                         Width = wikiBitmap.Size.Width,
                         MaxHeight = GetImageSizePrefs(),
-                        MaxWidth = GetImageSizePrefs()
+                        MaxWidth = GetImageSizePrefs(),
+                        DataContext = searchResult
                     };
 
                     wikiDetails.Children.Add(imageControl);
