@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
@@ -8,7 +8,8 @@
 
     <ItemGroup>
         <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-        <PackageReference Include="Blast.API" Version="0.9.91.52-beta" />
+        <PackageReference Include="Avalonia" Version="0.10.999-cibuild0021828-beta" />
+        <PackageReference Include="Blast.API" Version="0.9.91.998-beta" />
     </ItemGroup>
 
     <ItemGroup>

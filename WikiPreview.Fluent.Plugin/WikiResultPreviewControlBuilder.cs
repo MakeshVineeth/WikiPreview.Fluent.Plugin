@@ -141,8 +141,8 @@ namespace WikiPreview.Fluent.Plugin
                 Margin = new Thickness(0, 0, 0, 5)
             };
 
-            scrollViewer.PointerEnter += ScrollViewerOnPointerEnter;
-            scrollViewer.PointerLeave += ScrollViewerOnPointerLeave;
+            scrollViewer.PointerEntered += ScrollViewerOnPointerEnter;
+            scrollViewer.PointerExited += ScrollViewerOnPointerLeave;
 
             // Create Parent Grid.
             var grid = new Grid
