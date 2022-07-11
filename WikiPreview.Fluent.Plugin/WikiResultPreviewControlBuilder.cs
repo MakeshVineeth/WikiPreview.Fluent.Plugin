@@ -21,6 +21,7 @@ using static System.Environment;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
 using static WikiPreview.Fluent.Plugin.ResultGenerator;
 using Avalonia.Data;
+using Blast.API.Core.UI;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -102,20 +103,21 @@ namespace WikiPreview.Fluent.Plugin
 
                 if (wikiBitmap is { Size.IsDefault: false })
                 {
+                    Binding binding = new(nameof(searchResult.PreviewImage))
+                    {
+                        Converter = new BackgroundConverter()
+                    };
+
                     var imageControl = new Border
                     {
-                        Background = new ImageBrush()
-                        {
-                            Stretch = Stretch.UniformToFill,
-                            Source = wikiBitmap
-                        },
                         CornerRadius = new CornerRadius(5.0),
                         BorderThickness = new Thickness(5.0),
                         Height = wikiBitmap.Size.Height,
                         Width = wikiBitmap.Size.Width,
                         MaxHeight = GetImageSizePrefs(),
                         MaxWidth = GetImageSizePrefs(),
-                        DataContext = searchResult
+                        DataContext = searchResult,
+                        [!Border.BackgroundProperty] = binding
                     };
 
                     wikiDetails.Children.Add(imageControl);
