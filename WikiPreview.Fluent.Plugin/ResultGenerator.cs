@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Blast.API.Core.UI;
 using Blast.API.Search;
@@ -45,7 +46,7 @@ namespace WikiPreview.Fluent.Plugin
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public static ValueTask<WikiPreviewSearchResult> GenerateSearchResult(PageView value,
-            string searchedText, bool loadImage = true)
+            string searchedText, CancellationToken cancellationToken, bool loadImage = true)
         {
             string displayedName = value?.Title;
             string pageId = value?.PageId.ToString();
@@ -108,7 +109,7 @@ namespace WikiPreview.Fluent.Plugin
 
                         if (!bitmap.Size.IsEmpty)
                             bitmapImageResult = new BitmapImageResult(bitmap);
-                    });
+                    }, cancellationToken);
                 }
 
                 void UpdatePreviewImage()
@@ -120,7 +121,7 @@ namespace WikiPreview.Fluent.Plugin
                 {
                     UiUtilities.UiDispatcher.Post(UpdatePreviewImage);
                 }
-            });
+            }, cancellationToken);
 
             return new ValueTask<WikiPreviewSearchResult>(searchResult);
         }
@@ -146,7 +147,7 @@ namespace WikiPreview.Fluent.Plugin
             if (pages is { Count: 0 }) return default;
 
             PageView pageView = pages?.First();
-            return await GenerateSearchResult(pageView, pageView?.Title, loadImage);
+            return await GenerateSearchResult(pageView, pageView?.Title, CancellationToken.None, loadImage);
         }
     }
 }

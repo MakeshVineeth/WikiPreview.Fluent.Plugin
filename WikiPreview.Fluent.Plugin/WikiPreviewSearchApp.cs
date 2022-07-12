@@ -141,7 +141,7 @@ namespace WikiPreview.Fluent.Plugin
                     _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
                         {
                             WikiPreviewSearchResult wikiPreviewSearchResult =
-                                await GenerateSearchResult(entry.Value, searchedText);
+                                await GenerateSearchResult(entry.Value, searchedText, cancellationToken);
 
                             if (!string.IsNullOrWhiteSpace(wikiPreviewSearchResult?.DisplayedName))
                                 await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
