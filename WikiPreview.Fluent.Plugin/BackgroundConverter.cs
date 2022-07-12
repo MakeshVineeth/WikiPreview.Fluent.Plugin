@@ -1,5 +1,6 @@
 ﻿using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Blast.Core.Results;
 using System;
 using System.Globalization;
@@ -16,12 +17,10 @@ namespace WikiPreview.Fluent.Plugin
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is not BitmapImageResult)
+            if (value is not BitmapImageResult imageResult)
             {
                 return null;
             }
-
-            BitmapImageResult imageResult = value as BitmapImageResult;
 
             IBrush brush = new ImageBrush
             {
@@ -34,7 +33,17 @@ namespace WikiPreview.Fluent.Plugin
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return null;
+            if (value is not ImageBrush brush)
+            {
+                return null;
+            }
+
+            BitmapImageResult bitmapImageResult = new()
+            {
+                AvaloniaBitmap = (Bitmap)brush.Source
+            };
+
+            return bitmapImageResult;
         }
     }
 }

@@ -12,7 +12,6 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Blast.API.Core.Processes;
-using Blast.API.Graphics;
 using Blast.API.Processes;
 using Blast.Core.Interfaces;
 using TextCopy;
@@ -21,7 +20,6 @@ using static System.Environment;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
 using static WikiPreview.Fluent.Plugin.ResultGenerator;
 using Avalonia.Data;
-using Blast.API.Core.UI;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -112,11 +110,11 @@ namespace WikiPreview.Fluent.Plugin
                     {
                         CornerRadius = new CornerRadius(5.0),
                         BorderThickness = new Thickness(5.0),
-                        Height = wikiBitmap.Size.Height,
-                        Width = wikiBitmap.Size.Width,
                         MaxHeight = GetImageSizePrefs(),
                         MaxWidth = GetImageSizePrefs(),
                         DataContext = searchResult,
+                        Height = wikiBitmap.Size.Height,
+                        Width = wikiBitmap.Size.Width,
                         [!Border.BackgroundProperty] = binding
                     };
 
