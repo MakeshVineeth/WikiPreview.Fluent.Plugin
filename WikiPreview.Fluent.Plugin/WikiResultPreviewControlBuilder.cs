@@ -103,9 +103,21 @@ namespace WikiPreview.Fluent.Plugin
 
                 if (wikiBitmap is { Size.IsDefault: false })
                 {
-                    Binding binding = new(nameof(searchResult.PreviewImage))
+                    Binding background_binding = new(nameof(searchResult.PreviewImage))
                     {
                         Converter = new BackgroundConverter()
+                    };
+
+                    Binding binding_height = new(nameof(searchResult.PreviewImage))
+                    {
+                        Converter = new SizeConverter(),
+                        ConverterParameter = true
+                    };
+
+                    Binding binding_width = new(nameof(searchResult.PreviewImage))
+                    {
+                        Converter = new SizeConverter(),
+                        ConverterParameter = false
                     };
 
                     var imageControl = new Border
@@ -115,9 +127,9 @@ namespace WikiPreview.Fluent.Plugin
                         MaxHeight = GetImageSizePrefs(),
                         MaxWidth = GetImageSizePrefs(),
                         DataContext = searchResult,
-                        Height = wikiBitmap.Size.Height,
-                        Width = wikiBitmap.Size.Width,
-                        [!Border.BackgroundProperty] = binding
+                        [!Border.BackgroundProperty] = background_binding,
+                        [!Layoutable.WidthProperty] = binding_width,
+                        [!Layoutable.HeightProperty] = binding_height
                     };
 
                     Grid.SetRow(imageControl, 0);
