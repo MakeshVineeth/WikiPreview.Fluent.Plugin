@@ -92,7 +92,9 @@ namespace WikiPreview.Fluent.Plugin
             text = Regex.Replace(text, @"\r\n?|\n", NewLine + NewLine);
 
             // StackPanel to store image and text.
-            var wikiDetails = new DockPanel();
+            var wikiDetails = new Grid();
+            wikiDetails.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            wikiDetails.RowDefinitions.Add(new RowDefinition());
 
             // creates image control.
             if (searchResult.PreviewImage is { IsEmpty: false })
@@ -118,8 +120,8 @@ namespace WikiPreview.Fluent.Plugin
                         [!Border.BackgroundProperty] = binding
                     };
 
+                    Grid.SetRow(imageControl, 0);
                     wikiDetails.Children.Add(imageControl);
-                    imageControl.SetValue(DockPanel.DockProperty, Dock.Top);
                 }
             }
 
@@ -132,6 +134,7 @@ namespace WikiPreview.Fluent.Plugin
                 TextTrimming = TextTrimming.WordEllipsis
             };
 
+            Grid.SetRow(wikiDescription, 1);
             wikiDetails.Children.Add(wikiDescription);
 
             var scrollViewer = new ScrollViewer
