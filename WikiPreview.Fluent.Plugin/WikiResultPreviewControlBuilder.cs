@@ -12,7 +12,6 @@ using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Blast.API.Core.Processes;
-using Blast.API.Graphics;
 using Blast.API.Processes;
 using Blast.Core.Interfaces;
 using TextCopy;
@@ -20,6 +19,7 @@ using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static System.Environment;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchApp;
 using static WikiPreview.Fluent.Plugin.ResultGenerator;
+using Avalonia.Data;
 
 namespace WikiPreview.Fluent.Plugin
 {
@@ -92,41 +92,61 @@ namespace WikiPreview.Fluent.Plugin
             text = Regex.Replace(text, @"\r\n?|\n", NewLine + NewLine);
 
             // StackPanel to store image and text.
-            var wikiDetails = new DockPanel();
+            var wikiDetails = new Grid();
+            wikiDetails.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            wikiDetails.RowDefinitions.Add(new RowDefinition());
 
             // creates image control.
             if (searchResult.PreviewImage is { IsEmpty: false })
             {
-                Bitmap wikiBitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
+                Bitmap wikiBitmap = searchResult.PreviewImage.AvaloniaBitmap;
 
                 if (wikiBitmap is { Size.IsDefault: false })
                 {
-                    var imageControl = new Border
+                    Binding background_binding = new(nameof(searchResult.PreviewImage))
                     {
-                        Background = new ImageBrush(wikiBitmap)
-                        {
-                            Stretch = Stretch.UniformToFill
-                        },
-                        CornerRadius = new CornerRadius(5.0),
-                        BorderThickness = new Thickness(5.0),
-                        Height = wikiBitmap.Size.Height,
-                        Width = wikiBitmap.Size.Width,
-                        MaxHeight = GetImageSizePrefs(),
-                        MaxWidth = GetImageSizePrefs()
+                        Converter = new BackgroundConverter()
                     };
 
+                    Binding binding_height = new(nameof(searchResult.PreviewImage))
+                    {
+                        Converter = new SizeConverter(),
+                        ConverterParameter = true
+                    };
+
+                    Binding binding_width = new(nameof(searchResult.PreviewImage))
+                    {
+                        Converter = new SizeConverter(),
+                        ConverterParameter = false
+                    };
+
+                    var imageControl = new Border
+                    {
+                        CornerRadius = new CornerRadius(5.0),
+                        BorderThickness = new Thickness(5.0),
+                        MaxHeight = GetImageSizePrefs(),
+                        MaxWidth = GetImageSizePrefs(),
+                        DataContext = searchResult,
+                        [!Border.BackgroundProperty] = background_binding,
+                        [!Layoutable.WidthProperty] = binding_width,
+                        [!Layoutable.HeightProperty] = binding_height
+                    };
+
+                    Grid.SetRow(imageControl, 0);
                     wikiDetails.Children.Add(imageControl);
-                    imageControl.SetValue(DockPanel.DockProperty, Dock.Top);
                 }
             }
 
             // creates article content.
             var wikiDescription = new TextBlock
             {
-                Text = text, Padding = new Thickness(5, 10, 5, 0), TextWrapping = TextWrapping.Wrap,
+                Text = text,
+                Padding = new Thickness(5, 10, 5, 0),
+                TextWrapping = TextWrapping.Wrap,
                 TextTrimming = TextTrimming.WordEllipsis
             };
 
+            Grid.SetRow(wikiDescription, 1);
             wikiDetails.Children.Add(wikiDescription);
 
             var scrollViewer = new ScrollViewer
@@ -136,8 +156,8 @@ namespace WikiPreview.Fluent.Plugin
                 Margin = new Thickness(0, 0, 0, 5)
             };
 
-            scrollViewer.PointerEnter += ScrollViewerOnPointerEnter;
-            scrollViewer.PointerLeave += ScrollViewerOnPointerLeave;
+            scrollViewer.PointerEntered += ScrollViewerOnPointerEnter;
+            scrollViewer.PointerExited += ScrollViewerOnPointerLeave;
 
             // Create Parent Grid.
             var grid = new Grid

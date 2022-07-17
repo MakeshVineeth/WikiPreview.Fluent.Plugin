@@ -39,8 +39,6 @@ namespace WikiPreview.Fluent.Plugin
             }
         };
 
-        private readonly WikiResultPreviewControlBuilder _wikiResultPreviewControlBuilder = new();
-
         public WikiPreviewSearchResult(string resultName)
         {
             Tags = SearchTags;
@@ -48,11 +46,12 @@ namespace WikiPreview.Fluent.Plugin
             IconGlyph = SearchResultIcon;
             ResultType = WikiSearchTagName;
             ResultName = resultName;
-            ResultPreviewControlBuilder = _wikiResultPreviewControlBuilder;
+            ResultPreviewControlBuilder = new WikiResultPreviewControlBuilder();
         }
 
         public string Url { get; set; }
         public override string Context => WikiRootUrl + Url;
+        public string ImageUrl { get; set; }
 
         public static string GetFormattedUrl(QueryConfiguration queryConfiguration)
         {
