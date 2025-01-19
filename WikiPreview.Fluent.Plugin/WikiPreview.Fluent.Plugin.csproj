@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <Platforms>AnyCPU;x64</Platforms>
-        <AssemblyVersion>1.4.0.0</AssemblyVersion>
+        <TargetFramework>net8.0</TargetFramework>
+        <Platforms>AnyCPU</Platforms>
+        <AssemblyVersion>1.4.0.1</AssemblyVersion>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AsyncEnumerator" Version="4.0.2" />
-        <PackageReference Include="Avalonia" Version="0.10.999-cibuild0019861-beta" />
-        <PackageReference Include="Avalonia.Desktop" Version="0.10.999-cibuild0019861-beta" />
-        <PackageReference Include="Blast.API" Version="0.9.90.9999-beta" />
+        <PackageReference Include="Blast.API" Version="0.9.92-*">
+            <Private>false</Private>
+            <ExcludeAssets>runtime</ExcludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>

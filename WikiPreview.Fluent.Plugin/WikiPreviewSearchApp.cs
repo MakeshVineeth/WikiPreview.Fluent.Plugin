@@ -11,7 +11,6 @@ using Blast.API.Processes;
 using Blast.Core.Interfaces;
 using Blast.Core.Objects;
 using Blast.Core.Results;
-using Dasync.Collections;
 using TextCopy;
 using static WikiPreview.Fluent.Plugin.WikiPreviewSearchResult;
 using static WikiPreview.Fluent.Plugin.WikiResult;
@@ -133,20 +132,21 @@ namespace WikiPreview.Fluent.Plugin
 
             _ = httpClient.GetFromJsonAsync<Wiki>(url, SerializerOptions, cancellationToken).ContinueWith(task =>
             {
-                if (task.IsCompletedSuccessfully)
-                    _ = task.Result?.Query.Pages.ParallelForEachAsync(async entry =>
+                if (task.IsCompletedSuccessfully && task.Result?.Query?.Pages is {} pages)
+                    _ = Parallel.ForEachAsync(pages, cancellationToken,  async (entry, _) =>
                         {
+                            if(entry.Value == null) return;
                             WikiPreviewSearchResult wikiPreviewSearchResult =
                                 await GenerateSearchResult(entry.Value, searchedText);
 
                             if (wikiPreviewSearchResult != null)
-                                await channel.Writer.WriteAsync(wikiPreviewSearchResult, CancellationToken.None)
+                                await channel.Writer.WriteAsync(wikiPreviewSearchResult, cancellationToken)
                                     .ConfigureAwait(false);
-                        }, cancellationToken)
+                        })
                         .ContinueWith(_ => channel.Writer.Complete(), CancellationToken.None);
                 else
                     channel.Writer.Complete();
-            }, CancellationToken.None);
+            }, cancellationToken);
 
             await foreach (WikiPreviewSearchResult item in channel.Reader.ReadAllAsync(cancellationToken))
                 yield return item;
