@@ -56,7 +56,7 @@ namespace WikiPreview.Fluent.Plugin
 
             if (!result) return false;
 
-            host = uri.Host[3..];
+            if (uri.Host.Length >= 3) host = uri.Host[3..];
             return host.StartsWith("wikipedia.org") && uri.Segments.Length == 3 && uri.Fragment.Length == 0;
         }
 
@@ -99,7 +99,7 @@ namespace WikiPreview.Fluent.Plugin
             {
                 Bitmap wikiBitmap = searchResult.PreviewImage.ConvertToAvaloniaBitmap();
 
-                if (wikiBitmap is { Size.IsDefault: false })
+                if (wikiBitmap is { Size: { Width: > 0, Height: > 0 } })
                 {
                     var imageControl = new Border
                     {
@@ -136,8 +136,8 @@ namespace WikiPreview.Fluent.Plugin
                 Margin = new Thickness(0, 0, 0, 5)
             };
 
-            scrollViewer.PointerEnter += ScrollViewerOnPointerEnter;
-            scrollViewer.PointerLeave += ScrollViewerOnPointerLeave;
+            scrollViewer.PointerEntered += ScrollViewerOnPointerEnter;
+            scrollViewer.PointerExited += ScrollViewerOnPointerLeave;
 
             // Create Parent Grid.
             var grid = new Grid
@@ -201,7 +201,7 @@ namespace WikiPreview.Fluent.Plugin
         private static void ExecuteOperations(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            string buttonContent = button?.Content.ToString();
+            string buttonContent = button?.Content?.ToString();
             if (string.IsNullOrWhiteSpace(buttonContent)) return;
 
             string buttonTag = button.Tag?.ToString();
